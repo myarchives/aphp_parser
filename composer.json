@@ -1,0 +1,21 @@
+{
+	"name": "aphp/parser",
+	"description": "text of description",
+	"keywords": [ 
+		"PHP", "curl", "curlphp", "http", "http-client", "http-requests", "browser", "web-scraper", "web-scraping", "proxy"
+	],
+	"type": "php",
+	"license": "MIT",
+	"minimum-stability": "dev",
+	"require": {
+		"aphp/logger": "~1.0"
+	},
+	"autoload": {
+		"psr-4": {
+			"aphp\\Parser\\" : "src/"
+		},
+		"files": [
+			"src/Exceptions.php"
+		]
+	}
+}
