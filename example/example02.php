@@ -16,14 +16,13 @@ $logger->startLog();
 $browser = new Browser($useragent, __DIR__);
 $browser->setLogger($logger);
 
-// proxy
 
-// https://hidemyna.me/en/proxy-list/
+$browser->downloadImage('http://www.djswebdesign.com/wp-content/uploads/2012/05/PHP-MySQL.png');
+if ($browser->isDownloadSucceed()) {
+	copy($browser->getTempFileName(), __DIR__ . '/image' . $browser->getImageFileExt());
+}
 
-//$browser->client->set_proxy_http('78.40.87.18:808');
-//$browser->client->set_proxy_socks4('54.38.110.35:48034');
-
-//$browser->navigate('https://httpstat.us/');
-$browser->navigate('https://jsonplaceholder.typicode.com/users');
-
-echo $browser->getData();
+$browser->downloadFile('https://www.lifeonnetwork.com/wp-content/uploads/2017/11/download.png');
+if ($browser->isDownloadSucceed()) {
+	copy($browser->getTempFileName(), __DIR__ . '/filename.png');
+}
