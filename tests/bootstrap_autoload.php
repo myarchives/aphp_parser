@@ -16,6 +16,7 @@ phpunit --bootstrap tests/bootstrap_autoload.php --filter %method% %file%Test te
 */
 
 require __DIR__ . '/../vendor/autoload.php';
+require __DIR__ . '/mock/mockBot.php';
 
 class Base_TestCase extends PHPUnit_Framework_TestCase {
 

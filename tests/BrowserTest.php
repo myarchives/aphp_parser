@@ -19,7 +19,7 @@ class BrowserTest extends Base_TestCase {
 	protected $browser;
 	
 	protected function setUp() {
-		$this->browser = new Browser( $this->userAgent, __DIR__ . '/webserver' );
+		$this->browser = new Browser( $this->userAgent, __DIR__ . '/temp' );
 		@unlink( $this->browser->getTempFileName() );
 	}
 	

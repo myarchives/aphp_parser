@@ -16,11 +16,11 @@ class HttpClientTest extends Base_TestCase {
 	// override
 	
 	protected function setUp() {
-		@unlink(__DIR__ . '/webserver/cookie.txt');
+		@unlink(__DIR__ . '/temp/cookie.txt');
 	}
 	
 	protected function tearDown() {
-		@unlink(__DIR__ . '/webserver/cookie.txt');
+		@unlink(__DIR__ . '/temp/cookie.txt');
 	}
 	
 	// tests
@@ -77,10 +77,10 @@ class HttpClientTest extends Base_TestCase {
 	}
 
 	public function test_cookie() {
-		@unlink(__DIR__ . '/webserver/cookie.txt');
+		@unlink(__DIR__ . '/temp/cookie.txt');
 		$client = new HttpClient();
 		$client->set_user_agent('sample user agent');
-		$client->store_cookies( __DIR__ . '/webserver/cookie.txt');
+		$client->store_cookies( __DIR__ . '/temp/cookie.txt');
 
 		$data = $client->fetch_get('http://localhost:8008/setcookie.php');
 		$this->assertContains('cookie1 set', $data);
@@ -91,7 +91,7 @@ class HttpClientTest extends Base_TestCase {
 		
 		$client2 = new HttpClient();
 		$client2->set_user_agent('sample user agent');
-		$client2->store_cookies( __DIR__ . '/webserver/cookie.txt');
+		$client2->store_cookies( __DIR__ . '/temp/cookie.txt');
 
 		$data = $client2->fetch_get('http://localhost:8008/setcookie.php');
 		$this->assertContains('cookie1 = value', $data);

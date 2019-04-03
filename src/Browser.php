@@ -4,6 +4,7 @@ namespace aphp\Parser;
 
 abstract class BrowserH {
 	public $client = null; // HttpClient
+	public $prefix = '';
 	protected $rawdata = null; // raw data returned by the last query
 	protected $tempFileExt = null;
 	protected $tempFileMime = null;
@@ -71,6 +72,7 @@ class Browser extends BrowserH {
 		$this->client = new HttpClient();
 		$this->client->set_user_agent( $userAgent );
 
+		$this->prefix = $prefix;
 		$this->cookieFile = $tempDir . '/' . $prefix . $this->cookieFile;
 		$this->tempFile = $tempDir . '/' . $prefix . $this->tempFile;
 

@@ -18,3 +18,7 @@ class ResolveURL_Exception extends BaseException {
 		return self::createException('url %s', $value);
 	}
 }
+
+class NoProxy_Exception extends BaseException {
+
+}
