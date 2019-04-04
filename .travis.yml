@@ -6,7 +6,9 @@ language: php
 php:
   - '5.6'
   - '7.1'
-script: 
+install:
+  - composer install
+script:
   - wget -O phpunit.phar https://phar.phpunit.de/phpunit-5.phar
   - sh tests/startServer.sh > /dev/null 2>&1 &
   - php phpunit.phar --bootstrap tests/bootstrap_autoload.php tests
