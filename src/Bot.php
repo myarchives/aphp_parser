@@ -19,6 +19,8 @@ abstract class BotH {
 	abstract public function downloadImage( $url );
 	abstract public function downloadFile( $url );
 
+	abstract public function nextProxy();
+
 	abstract public function runProxyTest( $url ); // example https://www.uptimeinspector.com/test-server-connection.html
 }
 
@@ -62,12 +64,14 @@ class Bot extends BotH {
 		$browser = $this->addBrowser($userAgent);
 		$this->loggerInfo("add_proxy_http $proxy");
 		$browser->client->set_proxy_http($proxy);
+		$browser->proxyName = $proxy;
 	}
 
 	public function add_proxy_socks4($proxy, $userAgent) {
 		$browser = $this->addBrowser($userAgent);
 		$this->loggerInfo("add_proxy_socks4 $proxy");
 		$browser->client->set_proxy_socks4($proxy);
+		$browser->proxyName = $proxy;
 	}
 
 	public function navigate ( $url ) {
@@ -90,10 +94,10 @@ class Bot extends BotH {
 		$browserList = [];
 		foreach ($this->browsers as $browser) {
 			if ($browser->navigate( $url )) {
-				$this->loggerInfo("proxyTest OK : {$browser->prefix}");
+				$this->loggerInfo("proxyTest OK : {$browser->proxyName}");
 				$browserList[] = $browser;
 			} else {
-				$this->loggerInfo("proxyTest F : {$browser->prefix}");
+				$this->loggerInfo("proxyTest F : {$browser->proxyName}");
 			}
 		}
 		$this->browsers = $browserList;
@@ -101,14 +105,14 @@ class Bot extends BotH {
 
 	// TASK
 
-	protected function nextProxy() {
+	public function nextProxy() {
 		$i = array_search($this->currentBrowser, $this->browsers);
 		$i++;
 		if ($i>=count($this->browsers)) {
 			$i = 0;
 		}
 		$this->currentBrowser = $this->browsers[$i];
-		$this->loggerInfo("nextBrowser : {$this->currentBrowser->prefix}");
+		$this->loggerInfo("nextBrowser : {$this->currentBrowser->proxyName}");
 	}
 
 	protected function runTask($task, $url) {

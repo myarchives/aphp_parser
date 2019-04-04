@@ -5,6 +5,7 @@ namespace aphp\Parser;
 abstract class BrowserH {
 	public $client = null; // HttpClient
 	public $prefix = '';
+	public $proxyName = '';
 	protected $rawdata = null; // raw data returned by the last query
 	protected $tempFileExt = null;
 	protected $tempFileMime = null;
@@ -112,6 +113,9 @@ class Browser extends BrowserH {
 			}
 			elseif (strpos($mime, 'svg') !== false) {
 				$this->tempFileExt = '.svg';
+			} else {
+				$this->tempFileMime = null;
+				$this->tempFileExt = null;
 			}
 		}
 		return $this->isDownloadSucceed();
@@ -122,6 +126,7 @@ class Browser extends BrowserH {
 		if ($this->logger) {
 			$this->logger->info("DW  : $newurl");
 		}
+		$this->tempFileExt = null;
 		$fp = fopen($this->tempFile, 'w');
 		if ( $this->client->fetch_file ( $newurl, $fp ) ) {
 			fclose($fp);
