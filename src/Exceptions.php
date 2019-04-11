@@ -22,3 +22,9 @@ class ResolveURL_Exception extends BaseException {
 class NoProxy_Exception extends BaseException {
 
 }
+
+class Path_Exception extends BaseException {
+	public static function invalidUrl($url) {
+		return self::createException('invalidUrl %s', $url);
+	}
+}
