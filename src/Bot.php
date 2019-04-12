@@ -119,7 +119,7 @@ class Bot extends BotH {
 		$this->browsers = $browserList;
 	}
 
-	public function downloadCSSResources( $url, $resourceDir, $root = true, $inputParser = null ) {
+	public function downloadCSSResources( $url, $resourceDir, $root = true, $inputParser = null, $res = false ) {
 		// set config
 		$this->retryCount[] = $this->retryCount_CSSResources;
 		$this->_resetConfigAfterTask = true;
@@ -129,10 +129,10 @@ class Bot extends BotH {
 				mkdir($resourceDir . '/res');
 			}
 			// file
-			$ext = $this->extractExt($url);
+			$ext =  Path::extractExt($url);
 			if ($root) {
 				$dir = $resourceDir;
-				$fileName = Path::filteredUrl($url) . ($ext=='.bin' ? $ext : '');
+				$fileName = Path::filteredUrl($url) . ($ext=='.bin' ? $ext : '.html');
 			} else {
 				$dir = $resourceDir . '/res';
 				$fileName = md5_file($this->currentBrowser->getTempFileName()). $ext;
@@ -141,7 +141,7 @@ class Bot extends BotH {
 			copy($this->currentBrowser->getTempFileName(), $dirFileName);
 			// inputParser
 			if ($inputParser) {
-				$inputParser->mapFileToLink($url, $fileName);
+				$inputParser->mapFileToLink($url, ($res ? 'res/' : '') . $fileName);
 			}
 			// resources
 			if ($root || $ext == '.css') {
@@ -153,7 +153,7 @@ class Bot extends BotH {
 					$links = $styleParser->parseCSSLinks($url, $text);
 				}
 				foreach ($links as $link) {
-					$this->downloadCSSResources($link, $resourceDir, false, $styleParser);
+					$this->downloadCSSResources($link, $resourceDir, false, $styleParser, $root);
 				}
 				$text = $styleParser->replaceLinksInText($text);
 				file_put_contents($dirFileName, $text);

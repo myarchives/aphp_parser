@@ -2,4 +2,5 @@ sh.exe.stackdump
 vendor
 composer.lock
 example/dw
+example/temp
 tests/temp

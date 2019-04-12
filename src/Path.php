@@ -34,7 +34,7 @@ class Path extends PathH {
 	// STATIC
 
 	static function filteredUrl($url) {
-		$url = preg_replace("#([^\w\s\d\.\-_~,;:\[\]\(\)]|[\.]{2,})#", '', strtolower($url));
+		$url = preg_replace("#([^\w\s\d\.\-_\[\]\(\)]|[\.]{2,})#", '', strtolower($url));
 		if (strlen($url)>35) {
 			$url = substr($url, strlen($url)-35 , 35 );
 		}
@@ -118,7 +118,7 @@ class Path extends PathH {
 				}
 			}
 			$result = implode('/', $components);
-			if (preg_match('#^http#i', $result)) {
+			if (strpos($result, $this->domainPath()) === 0) {
 				return $result;
 			}
 			return null;

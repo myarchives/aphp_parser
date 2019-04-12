@@ -13,7 +13,7 @@ $logger = FileLogger::getInstance();
 $logger->configure(__DIR__ . '/logs/log');
 $logger->startLog();
 
-$browser = new Browser($useragent, __DIR__);
+$browser = new Browser($useragent, __DIR__ . '/temp');
 $browser->setLogger($logger);
 
 // proxy

@@ -13,16 +13,17 @@ $logger = FileLogger::getInstance();
 $logger->configure(__DIR__ . '/logs/log');
 $logger->startLog();
 
-$browser = new Browser($useragent, __DIR__);
-$browser->setLogger($logger);
+$tempDir = __DIR__ . '/temp';
 
+$browser = new Browser($useragent, $tempDir);
+$browser->setLogger($logger);
 
 $browser->downloadImage('http://www.djswebdesign.com/wp-content/uploads/2012/05/PHP-MySQL.png');
 if ($browser->isDownloadSucceed()) {
-	copy($browser->getTempFileName(), __DIR__ . '/image' . $browser->getImageFileExt());
+	copy($browser->getTempFileName(), $tempDir . '/image' . $browser->getImageFileExt());
 }
 
-$browser->downloadFile('https://www.lifeonnetwork.com/wp-content/uploads/2017/11/download.png');
+$browser->downloadFile('http://d3g0gp89917ko0.cloudfront.net/v--b23e476b7ade/common--theme/base/images/editor/icons3.png');
 if ($browser->isDownloadSucceed()) {
-	copy($browser->getTempFileName(), __DIR__ . '/filename.png');
+	copy($browser->getTempFileName(), $tempDir . '/filename.png');
 }

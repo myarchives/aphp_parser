@@ -18,20 +18,24 @@ $bot->setLogger( $logger );
 
 // https://hidemyna.me/en/proxy-list/
 
-$bot->add_proxy_http('207.180.233.72:80', $useragent);
-$bot->add_proxy_http('119.28.236.167:1080', $useragent);
+$bot->add_proxy_http('94.242.58.142:655', $useragent);
+$bot->add_proxy_http('94.242.55.108:655', $useragent);
+$bot->add_proxy_http('94.242.58.14:655', $useragent);
+$bot->add_proxy_http('91.221.109.138:3128', $useragent);
+$bot->add_proxy_http('91.221.109.136:3128', $useragent);
+$bot->add_proxy_http('84.201.254.47:3128', $useragent);
 
 $bot->runProxyTest('https://httpstat.us/');
 
-$bot->sleepTimeout = 0;
+$tempDir = __DIR__ . '/temp';
 
-@unlink(__DIR__ . '/image.png');
-@unlink(__DIR__ . '/image2.png');
+@unlink($tempDir . '/image.png');
+@unlink($tempDir . '/image2.png');
 
 $bot->downloadImage('http://www.djswebdesign.com/wp-content/uploads/2012/05/PHP-MySQL.png');
 if ($bot->currentBrowser->isDownloadSucceed()) {
 	$browser = $bot->currentBrowser;
-	copy($browser->getTempFileName(), __DIR__ . '/image' . $browser->getImageFileExt());
+	copy($browser->getTempFileName(), $tempDir . '/image' . $browser->getImageFileExt());
 }
 
 $bot->nextProxy();
@@ -39,5 +43,5 @@ $bot->nextProxy();
 $bot->downloadImage('http://www.djswebdesign.com/wp-content/uploads/2012/05/PHP-MySQL.png');
 if ($bot->currentBrowser->isDownloadSucceed()) {
 	$browser = $bot->currentBrowser;
-	copy($browser->getTempFileName(), __DIR__ . '/image2' . $browser->getImageFileExt());
+	copy($browser->getTempFileName(), $tempDir . '/image2' . $browser->getImageFileExt());
 }
