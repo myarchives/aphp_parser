@@ -31,6 +31,7 @@ class BotTest extends Base_TestCase {
 	// TEST
 
 	public function test_proxyTest() {
+		$this->bot->sleepTimeout[] = 0;
 		$this->bot->runProxyTest('https://google.com');
 		$count = count($this->bot->browsers);
 
@@ -43,8 +44,8 @@ class BotTest extends Base_TestCase {
 	}
 	
 	public function test_navigate1() {
-		$this->bot->sleepTimeout = 0;
-		$this->bot->retryCount = 4;
+		$this->bot->sleepTimeout[] = 0;
+		$this->bot->retryCount[] = 4;
 
 		$this->bot->browsers[0]->_nextResult = false;
 		$this->bot->browsers[1]->_nextResult = false;
@@ -69,8 +70,8 @@ class BotTest extends Base_TestCase {
 	}
 
 	public function test_error() {
-		$this->bot->sleepTimeout = 0;
-		$this->bot->retryCount = 4;
+		$this->bot->sleepTimeout[] = 0;
+		$this->bot->retryCount[] = 4;
 
 		$this->bot->browsers[0]->_nextResult = false;
 		$this->bot->browsers[1]->_nextResult = false;
@@ -87,6 +88,7 @@ class BotTest extends Base_TestCase {
     * @expectedException aphp\Parser\NoProxy_Exception
     */
 	public function test_proxyTest_error() {
+		$this->bot->sleepTimeout[] = 0;
 		$this->bot->browsers[0]->_nextResult = false;
 		$this->bot->browsers[1]->_nextResult = false;
 		$this->bot->browsers[2]->_nextResult = false;

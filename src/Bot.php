@@ -3,8 +3,12 @@
 namespace aphp\Parser;
 
 abstract class BotH {
-	public $retryCount = 5;
-	public $sleepTimeout = 3;
+	protected $_resetConfigAfterTask = false;
+
+	public $retryCount = [ 10 ];
+	public $sleepTimeout = [ 3 ];
+
+	public $retryCount_CSSResources = 3;
 	public $browsers = []; // [ Browser ]
 
 	public $tempDir;
@@ -14,12 +18,15 @@ abstract class BotH {
 
 	abstract public function add_proxy_http($proxy, $userAgent);
 	abstract public function add_proxy_socks4($proxy, $userAgent);
+	abstract public function addBrowser($userAgent);
 
 	abstract public function navigate ( $url );
 	abstract public function downloadImage( $url );
 	abstract public function downloadFile( $url );
+	abstract public function downloadCSSResources( $url, $resourceDir, $root = true, $inputParser = null );
 
 	abstract public function nextProxy();
+	abstract public function resetConfig();
 
 	abstract public function runProxyTest( $url ); // example https://www.uptimeinspector.com/test-server-connection.html
 }
@@ -33,7 +40,7 @@ class Bot extends BotH {
 
 	// PROTECTED
 
-	protected function addBrowser($userAgent) {
+	public function addBrowser($userAgent) {
 		$browser = new Browser($userAgent, $this->tempDir, $this->prefix . count($this->browsers) . '_');
 		if ($this->logger) 
 			$browser->setLogger($this->logger);
@@ -90,12 +97,21 @@ class Bot extends BotH {
 		return $this->currentBrowser->browser;
 	} 
 
-	public function runProxyTest( $url ) {
+	public function runProxyTest( $url, $limit = 30 ) {
 		$browserList = [];
+		$sleepTimeout = $this->sleepTimeout[ count($this->sleepTimeout)-1 ];
 		foreach ($this->browsers as $browser) {
 			if ($browser->navigate( $url )) {
 				$this->loggerInfo("proxyTest OK : {$browser->proxyName}");
 				$browserList[] = $browser;
+				$limit--;
+				if ($limit < 0) {
+					$this->loggerInfo("proxyTest limit OK : {$browser->proxyName}");
+					break;
+				}
+				if ($sleepTimeout > 0) {
+					sleep($sleepTimeout);
+				}
 			} else {
 				$this->loggerInfo("proxyTest F : {$browser->proxyName}");
 			}
@@ -103,6 +119,49 @@ class Bot extends BotH {
 		$this->browsers = $browserList;
 	}
 
+	public function downloadCSSResources( $url, $resourceDir, $root = true, $inputParser = null ) {
+		// set config
+		$this->retryCount[] = $this->retryCount_CSSResources;
+		$this->_resetConfigAfterTask = true;
+		if ($this->downloadFile($url)) {
+			// res dir
+			if (!is_dir($resourceDir . '/res')) {
+				mkdir($resourceDir . '/res');
+			}
+			// file
+			$ext = $this->extractExt($url);
+			if ($root) {
+				$dir = $resourceDir;
+				$fileName = Path::filteredUrl($url) . ($ext=='.bin' ? $ext : '');
+			} else {
+				$dir = $resourceDir . '/res';
+				$fileName = md5_file($this->currentBrowser->getTempFileName()). $ext;
+			}
+			$dirFileName = $dir . '/' . $fileName;
+			copy($this->currentBrowser->getTempFileName(), $dirFileName);
+			// inputParser
+			if ($inputParser) {
+				$inputParser->mapFileToLink($url, $fileName);
+			}
+			// resources
+			if ($root || $ext == '.css') {
+				$styleParser = new StyleParser();
+				$text = file_get_contents($dirFileName);
+				if ($root) {
+					$links = $styleParser->parseHTMLLinks($url, $text);
+				} else {
+					$links = $styleParser->parseCSSLinks($url, $text);
+				}
+				foreach ($links as $link) {
+					$this->downloadCSSResources($link, $resourceDir, false, $styleParser);
+				}
+				$text = $styleParser->replaceLinksInText($text);
+				file_put_contents($dirFileName, $text);
+			}
+			return true;
+		}
+		return false;
+	}
 	// TASK
 
 	public function nextProxy() {
@@ -115,28 +174,51 @@ class Bot extends BotH {
 		$this->loggerInfo("nextBrowser : {$this->currentBrowser->proxyName}");
 	}
 
+	public function resetConfig() {
+		$this->_resetConfigAfterTask = false;
+		$this->retryCount = [ $this->retryCount[0] ];
+		$this->sleepTimeout = [ $this->sleepTimeout[0] ];
+	}
+
 	protected function runTask($task, $url) {
 		if (count($this->browsers) == 0) {
 			throw new NoProxy_Exception();
 		}
 		$this->loggerInfo("START $task : $url");
-		$retryCount = $this->retryCount;
+		$retryCount = $this->retryCount[ count($this->retryCount)-1 ];
+		$sleepTimeout = $this->sleepTimeout[ count($this->sleepTimeout)-1 ];
 		while ($retryCount > 0) {
 			$result = $this->currentBrowser->{$task}($url);
 			if ($result) {
-				if ($this->sleepTimeout > 0) {
-					sleep($this->sleepTimeout);
+				if ($sleepTimeout > 0) {
+					sleep($sleepTimeout);
 				}
 				$this->loggerInfo("FINISH $task : $url");
+				if ($this->_resetConfigAfterTask) {
+					$this->resetConfig();
+				}
 				return true;
+			}
+			$code = $this->currentBrowser->client->get_http_response_code();
+			if ($code == 404 || $code == 403) {
+				if ($sleepTimeout > 0) {
+					sleep($sleepTimeout);
+				}
+				if ($code == 403) {
+					$this->nextProxy();
+				}
+				return false;
 			}
 			$retryCount--;
 			$this->nextProxy();
-			if ($this->sleepTimeout > 0) {
-				sleep($this->sleepTimeout);
+			if ($sleepTimeout > 0) {
+				sleep($sleepTimeout);
 			}
 		}
 		$this->loggerInfo("FAIL $task : $url");
+		if ($this->_resetConfigAfterTask) {
+			$this->resetConfig();
+		}
 		return false;
 	}
 }

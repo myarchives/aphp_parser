@@ -20,8 +20,10 @@ abstract class BrowserH {
 	abstract public function getData(); // null OR string
 	abstract public function getImageFileExt(); // png, jpg, gif, svg
 
+
 	abstract public function getTempFileMime(); // mime string
 	abstract public function getTempFileName();
+	abstract public function tempFileMimeIsImage();
 
 	abstract public function isNavigateSucceed();
 	abstract public function isDownloadSucceed();
@@ -101,19 +103,7 @@ class Browser extends BrowserH {
 	public function downloadImage( $url ) {
 		$this->downloadFile($url);
 		if ($this->isDownloadSucceed()) {
-			$mime = $this->tempFileMime;
-			if (strpos($mime, 'png') !== false) {
-				$this->tempFileExt = '.png';
-			}
-			elseif (strpos($mime, 'jpeg') !== false) {
-				$this->tempFileExt = '.jpg';
-			}
-			elseif (strpos($mime, 'gif') !== false) {
-				$this->tempFileExt = '.gif';
-			}
-			elseif (strpos($mime, 'svg') !== false) {
-				$this->tempFileExt = '.svg';
-			} else {
+			if ($this->tempFileMimeIsImage() == false) {
 				$this->tempFileMime = null;
 				$this->tempFileExt = null;
 			}
@@ -157,6 +147,25 @@ class Browser extends BrowserH {
 
 	public function getTempFileMime() {
 		return $this->tempFileMime;
+	}
+
+	public function tempFileMimeIsImage() {
+		$mime = $this->tempFileMime;
+		if (strpos($mime, 'png') !== false) {
+			$this->tempFileExt = '.png';
+		}
+		elseif (strpos($mime, 'jpeg') !== false) {
+			$this->tempFileExt = '.jpg';
+		}
+		elseif (strpos($mime, 'gif') !== false) {
+			$this->tempFileExt = '.gif';
+		}
+		elseif (strpos($mime, 'svg') !== false) {
+			$this->tempFileExt = '.svg';
+		} else {
+			return false;
+		}
+		return true;
 	}
 
 	public function getTempFileName() {

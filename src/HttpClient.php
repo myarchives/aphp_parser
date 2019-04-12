@@ -132,7 +132,7 @@ class HttpClient extends HttpClientH {
 	}
 
 	public function get_http_response_code() {
-		return curl_getinfo($this->ch, CURLINFO_HTTP_CODE);
+		return curl_getinfo($this->ch, CURLINFO_RESPONSE_CODE);
 	}
 
 	public function get_error_msg() {

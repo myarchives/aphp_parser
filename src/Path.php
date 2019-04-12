@@ -2,9 +2,15 @@
 namespace aphp\Parser;
 
 abstract class PathH {
+	public $components;
+	public $url;
+
 	abstract public function absPath();
 	abstract public function domainPath();
 	abstract public function relativeToAbsolute($relativeUrl);
+
+	// static function filteredUrl($url)
+	// static function extractExt($url, $default = '.bin')
 }
 
 // ---------
@@ -25,8 +31,28 @@ class Path extends PathH {
 	const APHP_URL_FRAGMENT = 4;
 	const APHP_URL_ISDIR = 5;
 
-	public $components;
-	public $url;
+	// STATIC
+
+	static function filteredUrl($url) {
+		$url = preg_replace("#([^\w\s\d\.\-_~,;:\[\]\(\)]|[\.]{2,})#", '', strtolower($url));
+		if (strlen($url)>35) {
+			$url = substr($url, strlen($url)-35 , 35 );
+		}
+		return $url;
+	}
+
+	static function extractExt($url, $default = '.bin') {
+		$ext = explode('.', self::filteredUrl($url));
+		if (count($ext)>1) {
+			$ext_last = array_pop($ext);
+			if (strlen($ext_last)>0) {
+				return '.' . strtolower($ext_last);
+			}
+		}
+		return $default;
+	}
+
+	// PUBLIC
 
 	public function __construct($url) {
 		$this->url = $url;
@@ -91,7 +117,11 @@ class Path extends PathH {
 					}
 				}
 			}
-			return implode('/', $components);
+			$result = implode('/', $components);
+			if (preg_match('#^http#i', $result)) {
+				return $result;
+			}
+			return null;
 		}
 		return $result;
 	}

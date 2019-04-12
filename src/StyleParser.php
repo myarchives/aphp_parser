@@ -64,8 +64,10 @@ class StyleParser extends StyleParserH {
 		$links = array_values($links);
 		$links_path = array_map( [ $this->path, 'relativeToAbsolute'], $links);
 
-		for($i = 0; $i < count($links_path); $i++) {
-			$this->linkMap[ $links_path[$i] ] = $links[$i];
+		for ($i = 0; $i < count($links_path); $i++) {
+			if ($links_path[$i]) {
+				$this->linkMap[ $links_path[$i] ] = $links[$i];
+			}
 		}
 		return $links_path;
 	}

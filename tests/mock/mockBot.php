@@ -20,6 +20,14 @@ class mockBrowser extends Browser {
 }
 
 class mockBot extends Bot {
+	public function addBrowser($userAgent) {
+		$browser = new mockBrowser($userAgent, $this->tempDir, $this->prefix . count($this->browsers) . '_');
+		if ($this->logger) 
+			$browser->setLogger($this->logger);
+		$this->browsers[] = $browser;
+		$this->currentBrowser = $this->browsers[0];
+		return $browser;
+	}
 	public function add_proxy_http($proxy, $userAgent) {
 		$this->addBrowser($userAgent);
 	}
