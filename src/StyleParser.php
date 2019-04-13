@@ -24,6 +24,9 @@ class StyleParser extends StyleParserH {
 		if (preg_match_all( $this->preg('#<link.+?rel=QstylesheetQ.+?href=Q(.+?)Q.*?>#i'), $text, $m)) {
 			$links = array_merge($links, $m[1]);
 		}
+		if (preg_match_all( $this->preg('#<link.+?href=Q(.+?)Q.+?rel=QstylesheetQ.*?>#i'), $text, $m)) {
+			$links = array_merge($links, $m[1]);
+		}
 		if (preg_match_all( $this->preg('#@import\s+url\(Q?(.+?)Q?\)#'), $text, $m)) {
 			$links = array_merge($links, $m[1]);
 		}
@@ -62,7 +65,8 @@ class StyleParser extends StyleParserH {
 	protected function linksMapAndReturn($links) {
 		$links = array_unique($links);
 		$links = array_values($links);
-		$links_path = array_map( [ $this->path, 'relativeToAbsolute'], $links);
+		$links_path = array_map('htmlspecialchars_decode', $links);
+		$links_path = array_map( [ $this->path, 'relativeToAbsolute'], $links_path);
 		$result = [];
 		for ($i = 0; $i < count($links_path); $i++) {
 			if ($links_path[$i]) {

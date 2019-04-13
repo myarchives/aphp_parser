@@ -5,6 +5,7 @@ abstract class PathH {
 	public $components;
 	public $url;
 
+	abstract public function filePath();
 	abstract public function absPath();
 	abstract public function domainPath();
 	abstract public function relativeToAbsolute($relativeUrl);
@@ -24,12 +25,12 @@ domain/path ~ (ISDIR = FALSE)
 */
 
 class Path extends PathH {
-	const APHP_URL_SCHEME = 0;
-	const APHP_URL_DOMAIN = 1;
-	const APHP_URL_PATH = 2;
-	const APHP_URL_QUERY = 3;
-	const APHP_URL_FRAGMENT = 4;
-	const APHP_URL_ISDIR = 5;
+	const URL_SCHEME = 0;
+	const URL_DOMAIN = 1;
+	const URL_PATH = 2;
+	const URL_QUERY = 3;
+	const URL_FRAGMENT = 4;
+	const URL_ISDIR = 5;
 
 	// STATIC
 
@@ -42,7 +43,8 @@ class Path extends PathH {
 	}
 
 	static function extractExt($url, $default = '.bin') {
-		$ext = explode('.', self::filteredUrl($url));
+		$path = new Path($url);
+		$ext = explode('.', self::filteredUrl($path->filePath()));
 		if (count($ext)>1) {
 			$ext_last = array_pop($ext);
 			if (strlen($ext_last)>0) {
@@ -59,18 +61,26 @@ class Path extends PathH {
 		$this->parseUrl();
 	}
 
-	public function absPath() {
-		$components[] = $this->components[ self::APHP_URL_SCHEME ];
-		$components[] = $this->components[ self::APHP_URL_DOMAIN ];
-		$components[] = $this->components[ self::APHP_URL_PATH ];
+	public function filePath() {
+		$components[] = $this->components[ self::URL_SCHEME ];
+		$components[] = $this->components[ self::URL_DOMAIN ];
+		$components[] = $this->components[ self::URL_PATH ];
 		for ($i = count($components) - 1; $i>=0; $i--) {
 			if ($components[$i] == NULL) {
 				unset($components[$i]);
 			}
 		}
 		$absPath = trim(implode('/', $components), '/');
-		if ($this->components[ self::APHP_URL_ISDIR ]) {
+		if ($this->components[ self::URL_ISDIR ]) {
 			return $absPath . '/';
+		}
+		return $absPath;
+	}
+
+	public function absPath() {
+		$absPath = $this->filePath();
+		if ($this->components[ self::URL_ISDIR ]) {
+			return $absPath;
 		}
 		$absPathItems = explode('/', $absPath);
 		array_pop($absPathItems);
@@ -78,8 +88,8 @@ class Path extends PathH {
 	}
 
 	public function domainPath() {
-		$components[] = $this->components[ self::APHP_URL_SCHEME ];
-		$components[] = $this->components[ self::APHP_URL_DOMAIN ];
+		$components[] = $this->components[ self::URL_SCHEME ];
+		$components[] = $this->components[ self::URL_DOMAIN ];
 		return trim(implode('/', $components), '/') . '/';
 	}
 
@@ -134,15 +144,15 @@ class Path extends PathH {
 			throw Path_Exception::invalidUrl($this->url);
 		}
 		$this->components = [
-			self::APHP_URL_SCHEME => $components['scheme'] . ':/',
-			self::APHP_URL_DOMAIN => $components['host'] . (empty($components['port']) ? '' : ':' . $components['port']),
-			self::APHP_URL_PATH => (empty($components['path']) || $components['path'] == '/') ? NULL : trim($components['path'], '/'),
-			self::APHP_URL_QUERY => empty($components['query']) ? NULL : '?' . $components['query'],
-			self::APHP_URL_FRAGMENT => empty($components['fragment']) ? NULL : '#' . $components['fragment'],
-			self::APHP_URL_ISDIR => preg_match('#/$#', $this->url)
+			self::URL_SCHEME => $components['scheme'] . ':/',
+			self::URL_DOMAIN => $components['host'] . (empty($components['port']) ? '' : ':' . $components['port']),
+			self::URL_PATH => (empty($components['path']) || $components['path'] == '/') ? NULL : trim($components['path'], '/'),
+			self::URL_QUERY => empty($components['query']) ? NULL : '?' . $components['query'],
+			self::URL_FRAGMENT => empty($components['fragment']) ? NULL : '#' . $components['fragment'],
+			self::URL_ISDIR => preg_match('#/$#', $this->url)
 		];
-		if (!$this->components[ self::APHP_URL_PATH ] && !$this->components[ self::APHP_URL_ISDIR ]) {
-			$this->components[ self::APHP_URL_ISDIR ] = true;
+		if (!$this->components[ self::URL_PATH ] && !$this->components[ self::URL_ISDIR ]) {
+			$this->components[ self::URL_ISDIR ] = true;
 			$this->url .= '/';
 		}
 	}

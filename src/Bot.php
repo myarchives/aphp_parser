@@ -7,6 +7,7 @@ abstract class BotH {
 
 	public $retryCount = [ 10 ];
 	public $sleepTimeout = [ 3 ];
+	public $maxProxyCount = 50;
 
 	public $retryCount_CSSResources = 4;
 	public $browsers = []; // [ Browser ]
@@ -16,6 +17,8 @@ abstract class BotH {
 
 	public $currentBrowser; // Browser
 
+	abstract public function setConfig(Config $config);
+
 	abstract public function add_proxy_http($proxy, $userAgent);
 	abstract public function add_proxy_socks4($proxy, $userAgent);
 	abstract public function addBrowser($userAgent);
@@ -23,12 +26,12 @@ abstract class BotH {
 	abstract public function navigate ( $url );
 	abstract public function downloadImage( $url );
 	abstract public function downloadFile( $url );
-	abstract public function downloadCSSResources( $url, $resourceDir, $root = true, $inputParser = null );
+	abstract public function downloadCSSResources( $url, $resourceDir, $root = true, $inputParser = null, $res = false );
 
 	abstract public function nextProxy();
 	abstract public function resetConfig();
 
-	abstract public function runProxyTest( $url ); // example https://www.uptimeinspector.com/test-server-connection.html
+	abstract public function runProxyTest( $url );
 }
 
 // ------------------------
@@ -41,6 +44,9 @@ class Bot extends BotH {
 	// PROTECTED
 
 	public function addBrowser($userAgent) {
+		if (count($this->browsers) >= $this->maxProxyCount) {
+			return null;
+		}
 		$browser = new Browser($userAgent, $this->tempDir, $this->prefix . count($this->browsers) . '_');
 		if ($this->logger) 
 			$browser->setLogger($this->logger);
@@ -67,8 +73,20 @@ class Bot extends BotH {
 		$this->prefix  = $prefix;
 	}
 
+	public function setConfig(Config $config) {
+		$proxyList = explode("\n", $config->proxyURLs_text);
+		$userAgentList = new UserAgentList($config->userAgentList);
+		foreach ($proxyList as $proxy) {
+			$this->add_proxy_http(trim($proxy), $userAgentList->getAgent());
+		}
+		$this->retryCount[0]   = $config->retryCount;
+		$this->sleepTimeout[0] = $config->sleepTimeout;
+		$this->retryCount_CSSResources = $config->retryCount_CSSResources;
+	}
+
 	public function add_proxy_http($proxy, $userAgent) {
 		$browser = $this->addBrowser($userAgent);
+		if (!$browser) return;
 		$this->loggerInfo("add_proxy_http $proxy");
 		$browser->client->set_proxy_http($proxy);
 		$browser->proxyName = $proxy;
@@ -76,6 +94,7 @@ class Bot extends BotH {
 
 	public function add_proxy_socks4($proxy, $userAgent) {
 		$browser = $this->addBrowser($userAgent);
+		if (!$browser) return;
 		$this->loggerInfo("add_proxy_socks4 $proxy");
 		$browser->client->set_proxy_socks4($proxy);
 		$browser->proxyName = $proxy;
@@ -121,8 +140,10 @@ class Bot extends BotH {
 
 	public function downloadCSSResources( $url, $resourceDir, $root = true, $inputParser = null, $res = false ) {
 		// set config
-		$this->retryCount[] = $this->retryCount_CSSResources;
-		$this->_resetConfigAfterTask = true;
+		if (!$root) {
+			$this->retryCount[] = $this->retryCount_CSSResources;
+			$this->_resetConfigAfterTask = true;
+		}
 		if ($this->downloadFile($url)) {
 			// res dir
 			if (!is_dir($resourceDir . '/res')) {
