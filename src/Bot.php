@@ -8,7 +8,7 @@ abstract class BotH {
 	public $retryCount = [ 10 ];
 	public $sleepTimeout = [ 3 ];
 
-	public $retryCount_CSSResources = 3;
+	public $retryCount_CSSResources = 4;
 	public $browsers = []; // [ Browser ]
 
 	public $tempDir;
@@ -143,8 +143,9 @@ class Bot extends BotH {
 			if ($inputParser) {
 				$inputParser->mapFileToLink($url, ($res ? 'res/' : '') . $fileName);
 			}
+			$mime = $this->currentBrowser->getTempFileMime();
 			// resources
-			if ($root || $ext == '.css') {
+			if ($root || (strpos($mime, 'text/') !== false)) {
 				$styleParser = new StyleParser();
 				$text = file_get_contents($dirFileName);
 				if ($root) {
@@ -200,12 +201,9 @@ class Bot extends BotH {
 				return true;
 			}
 			$code = $this->currentBrowser->client->get_http_response_code();
-			if ($code == 404 || $code == 403) {
+			if ($code == 404) {
 				if ($sleepTimeout > 0) {
 					sleep($sleepTimeout);
-				}
-				if ($code == 403) {
-					$this->nextProxy();
 				}
 				return false;
 			}

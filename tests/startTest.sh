@@ -10,6 +10,7 @@
 #
 # run webserver before test
 # startServer.sh
+# css-webserver/startServer.sh
 
 BASEDIR=$(dirname "$0")
 cd $BASEDIR
