@@ -43,6 +43,7 @@ echo $browser->getData();
 
 * Browser with cookies.
 * Download files.
+* Download pages with CSS.
 * HTTP, HTTPS.
 * Proxy.
 
@@ -51,6 +52,14 @@ echo $browser->getData();
 ```php
 class Browser {
 	public $client = null; // HttpClient
+	public $prefix = '';
+	public $proxyName = '';
+	protected $rawdata = null; // raw data returned by the last query
+	protected $tempFileExt = null;
+	protected $tempFileMime = null;
+
+	protected $cookieFile = 'cookies.txt';
+	protected $tempFile = 'download.bin';
 
 	public function navigate ( $url );
 	public function downloadImage( $url );
@@ -59,8 +68,10 @@ class Browser {
 	public function getData(); // null OR string
 	public function getImageFileExt(); // png, jpg, gif, svg
 
+
 	public function getTempFileMime(); // mime string
 	public function getTempFileName();
+	public function tempFileMimeIsImage();
 
 	public function isNavigateSucceed();
 	public function isDownloadSucceed();
@@ -106,55 +117,103 @@ if ($browser->isDownloadSucceed()) {
 }
 ```
 ## Bot
-### Bot class used to failsafe downloading with multiple proxies and browsers.
+Bot class used to failsafe downloading with multiple proxies and browsers.
 ```php
 class Bot {
-	public $retryCount = 5;
-	public $sleepTimeout = 3;
+	public $retryCount = [ 10 ];
+	public $sleepTimeout = [ 3 ];
+
+	public $retryCount_CSSResources = 4;
 	public $browsers = []; // [ Browser ]
+
+	public $tempDir;
+	public $prefix = '';
 
 	public $currentBrowser; // Browser
 
+	public function setConfig(Config $config);
+
 	public function add_proxy_http($proxy, $userAgent);
 	public function add_proxy_socks4($proxy, $userAgent);
+	public function addBrowser($userAgent);
 
-	public function navigate ( $url ); 
+	public function navigate ( $url );
 	public function downloadImage( $url );
 	public function downloadFile( $url );
+	public function downloadCSSResources($url, $resourceDir);
 
 	public function nextProxy();
+	public function resetConfig();
 
-	public function runProxyTest( $url ); 
+	public function runProxyTest( $url );
 }
+```
+### Initialization with Config
+```php
+use aphp\logger\FileLogger;
+use aphp\Parser\Bot;
+use aphp\Parser\Config;
+
+set_time_limit(0); //  Limits the maximum execution time, unlimited
+
+$logger = FileLogger::getInstance();
+$logger->configure(__DIR__ . '/logs/log');
+$logger->startLog();
+
+$config = new Config();
+
+$bot = new Bot( __DIR__ . '/temp');
+$bot->setLogger( $logger );
+
+$config->proxyURLs_text = 
+'78.40.87.18:801
+78.40.87.18:802
+78.40.87.18:803
+78.40.87.18:804';
+
+// adding proxies with Config
+$bot->setConfig($config); 
+echo 'browsers count = ' . count($bot->browsers) . PHP_EOL;
 ```
 ### Proxy Test
 Used to make working proxy list.
 ```php
-use aphp\Parser\Bot;
+$userAgentList = new UserAgentList('textFiles/useragents.txt');
 
-$bot = new Bot(__DIR__ . '/temp'  );
-
-$userAgent[0] = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1';
-$userAgent[1] = 'Mozilla/5.0 (Windows NT 5.1; rv:33.0) Gecko/20100101 Firefox/33.0';
-$userAgent[2] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36';
-$userAgent[3] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36';
-
-$bot->add_proxy_http('78.40.87.18:801', $userAgent[0]);
-$bot->add_proxy_http('78.40.87.18:802', $userAgent[1]);
-$bot->add_proxy_http('78.40.87.18:803', $userAgent[2]);
-$bot->add_proxy_http('78.40.87.18:804', $userAgent[3]);
+$bot->add_proxy_http('78.40.87.18:801', $userAgentList->getAgent());
+$bot->add_proxy_http('78.40.87.18:802', $userAgentList->getAgent());
+$bot->add_proxy_http('78.40.87.18:803', $userAgentList->getAgent());
+$bot->add_proxy_http('78.40.87.18:804', $userAgentList->getAgent());
 
 $bot->runProxyTest( 'https://httpstat.us/' );
-
-print_r($bot->browsers);
 ```
-### Downloading
+### Download
 Used browser to get result
 ```php
 $result = $bot->navigate( 'https://httpstat.us/' );
 if ($result) {
 	echo $bot->currentBrowser->getData();
 }
+$result = $bot->downloadFile( 'https://httpstat.us/' ); // downloadImage
+if ($result) {
+	copy( $bot->currentBrowser->getTempFileName(), __DIR__ . '/dw/file.html' );
+}
+```
+### Download page with css resources
+```php
+if ($bot->downloadCSSResources('https://httpstat.us/', __DIR__ . '/dw')) {
+	print_r(scandir(__DIR__ . '/dw'));
+	print_r(scandir(__DIR__ . '/dw/res'));
+}
+/*
+(
+    [2] => httpshttpstat.us.html
+    [3] => res
+)
+(
+    [2] => 0332350d3d76241fdc35dd0a58d4470f.css
+)
+*/
 ```
 ### Manual proxy switcher
 ```php

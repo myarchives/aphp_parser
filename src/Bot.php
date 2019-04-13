@@ -112,10 +112,6 @@ class Bot extends BotH {
 		return $this->runTask('downloadFile', $url);
 	}
 
-	public function getBrowser() {
-		return $this->currentBrowser->browser;
-	} 
-
 	public function runProxyTest( $url, $limit = 30 ) {
 		$browserList = [];
 		$sleepTimeout = $this->sleepTimeout[ count($this->sleepTimeout)-1 ];

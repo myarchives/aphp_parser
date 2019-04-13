@@ -7,7 +7,6 @@ abstract class HttpClientH {
 	public $last_url;
 	public $urlTimeout = 30;
 	public $fileTimeout = 60;
-	protected $stdout = null;
 
 	abstract public function set_referrer($referrer_url);
 	abstract public function set_user_agent($useragent);
@@ -38,11 +37,13 @@ abstract class HttpClientH {
 class HttpClient extends HttpClientH {
 	use \Psr\Log\LoggerAwareTrait; // trait
 
+	static $stdout = null;
+
 	// PROTECTED
 
 	protected function exec_data() {
 		// return into a publiciable rather than displaying it
-		curl_setopt($this->ch, CURLOPT_FILE, $this->stdout);
+		curl_setopt($this->ch, CURLOPT_FILE, HttpClient::$stdout);
 		curl_setopt($this->ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($this->ch, CURLOPT_VERBOSE, false);
 		curl_setopt($this->ch, CURLOPT_HEADER, false);
@@ -81,7 +82,9 @@ class HttpClient extends HttpClientH {
 
 	public function __construct() {
 		$this->ch = curl_init();
-		$this->stdout = fopen('php://stdout','w');
+		if (!HttpClient::$stdout) {
+			HttpClient::$stdout = fopen('php://stdout','w');
+		}
 		//set error in case http return code bigger than 300
 		curl_setopt($this->ch, CURLOPT_FAILONERROR, true);
 		// use gzip if possible
