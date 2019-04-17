@@ -19,10 +19,19 @@ https://webanetlabs.net/publ/24
 178.63.127.122:3128
 */
 	public $proxyURLs_text = ''; // text of proxy URLs, manual or automatic set
-
-	public $retryCount = 10;
-	public $sleepTimeout = 3;
-	public $retryCount_CSSResources = 4;
-
 	public $userAgentList = __DIR__ . '/../textFiles/useragents.txt'; // file
+
+	public function botSettings_default() {
+		$settings = new BotSettings();
+		//$settings->retryCount = 10;
+		//$settings->sleepTimeout = 3;
+		//$settings->maxProxyCount = 75;
+		return $settings;
+	}
+
+	public function botSettings_css() {
+		$settings = $this->botSettings_default();
+		$settings->retryCount = 4;
+		return $settings;
+	}
 }

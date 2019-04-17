@@ -19,21 +19,13 @@ PHP5.6 , PHP7.0+
 
 ```php
 require 'vendor/autoload.php';
-
 use aphp\Parser\Browser;
-use aphp\logger\FileLogger;
 
 set_time_limit(0); //  Limits the maximum execution time, unlimited
 
 $useragent = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36';
 
-$logger = FileLogger::getInstance();
-$logger->configure(__DIR__ . '/logs/log');
-$logger->startLog();
-
 $browser = new Browser($useragent, __DIR__);
-$browser->setLogger($logger);
-
 $browser->navigate('https://httpstat.us/');
 
 echo $browser->getData();
@@ -119,12 +111,18 @@ if ($browser->isDownloadSucceed()) {
 ## Bot
 Bot class used to failsafe downloading with multiple proxies and browsers.
 ```php
-class Bot {
-	public $retryCount = [ 10 ];
-	public $sleepTimeout = [ 3 ];
+class BotSettings {
+	public $retryCount = 10;
+	public $sleepTimeout = 3;
+	public $maxProxyCount = 75;
+}
 
-	public $retryCount_CSSResources = 4;
+class Bot {
 	public $browsers = []; // [ Browser ]
+ 
+	public $currentSettings; // BotSettings
+	public $settingsDefault; // BotSettings
+	public $settingsCSS; // BotSettings
 
 	public $tempDir;
 	public $prefix = '';
@@ -140,11 +138,9 @@ class Bot {
 	public function navigate ( $url );
 	public function downloadImage( $url );
 	public function downloadFile( $url );
-	public function downloadCSSResources($url, $resourceDir);
+	public function downloadCSSResources( $url, $resourceDir);
 
 	public function nextProxy();
-	public function resetConfig();
-
 	public function runProxyTest( $url );
 }
 ```

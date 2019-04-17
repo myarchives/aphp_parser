@@ -15,10 +15,14 @@ $logger->startLog();
 
 $bot = new Bot( __DIR__ . '/temp');
 $bot->setLogger( $logger );
+$bot->settingsCSS->retryCount = 1;
+$bot->settingsCSS->sleepTimeout = 1;
+$bot->currentSettings->sleepTimeout = 1;
 
 $bot->addBrowser($useragent);
 
 // use local webserver at /tests/css-webserver
+// sh tests/css-webserver/startServer.sh
 
 $result = $bot->downloadCSSResources('http://localhost:8009/', __DIR__ . '/dw');
 

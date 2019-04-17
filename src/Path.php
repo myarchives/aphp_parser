@@ -9,6 +9,7 @@ abstract class PathH {
 	abstract public function absPath();
 	abstract public function domainPath();
 	abstract public function relativeToAbsolute($relativeUrl);
+	abstract public function isDomainUrl($url);
 
 	// static function filteredUrl($url)
 	// static function extractExt($url, $default = '.bin')
@@ -128,12 +129,15 @@ class Path extends PathH {
 				}
 			}
 			$result = implode('/', $components);
-			if (strpos($result, $this->domainPath()) === 0) {
-				return $result;
+			if (strpos($result, $this->domainPath()) !== 0) {
+				return null;
 			}
-			return null;
 		}
 		return $result;
+	}
+
+	public function isDomainUrl($url) {
+		return (strpos($url, trim($this->components[self::URL_DOMAIN],'/')) !== false);
 	}
 
 	// PROTECTED
@@ -157,3 +161,7 @@ class Path extends PathH {
 		}
 	}
 }
+
+
+
+

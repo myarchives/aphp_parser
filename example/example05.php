@@ -17,6 +17,8 @@ $config = new Config();
 $bot = new Bot( __DIR__ . '/temp');
 $bot->setLogger( $logger );
 
+// http://proxy-daily.com/?PageSpeed=noscript
+
 $config->proxyURLs_text = 
 '207.154.231.211:8080
 118.174.220.133:50616
@@ -30,7 +32,10 @@ $config->proxyURLs_text =
 103.216.59.122:38102
 167.99.1.100:3128
 194.29.60.48:45416
-1.2.169.44:48545';
+1.2.169.44:48545
+183.89.187.42:8080
+187.87.180.132:20183
+138.255.182.35:8080';
 
 // adding proxies with config
 $bot->setConfig($config); 

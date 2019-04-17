@@ -11,7 +11,6 @@ abstract class HttpClientH {
 	abstract public function set_referrer($referrer_url);
 	abstract public function set_user_agent($useragent);
 	abstract public function set_headers($headers);
-	abstract public function enable_headers($trueOrFalse);
 	abstract public function set_url($url);
 	abstract public function store_cookies($cookie_file);
 	abstract public function set_cookie($cookie);
@@ -109,10 +108,6 @@ class HttpClient extends HttpClientH {
 
 	public function set_headers($headers)	{
 		curl_setopt($this->ch, CURLOPT_HTTPHEADER, $headers);
-	}
-
-	public function enable_headers($trueOrFalse) {
-		curl_setopt($this->ch, CURLOPT_HEADER, $trueOrFalse);
 	}
 
 	public function set_url($url) {

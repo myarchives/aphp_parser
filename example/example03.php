@@ -18,12 +18,9 @@ $bot->setLogger( $logger );
 
 // https://hidemyna.me/en/proxy-list/
 
-$bot->add_proxy_http('94.242.58.142:655', $useragent);
-$bot->add_proxy_http('94.242.55.108:655', $useragent);
-$bot->add_proxy_http('94.242.58.14:655', $useragent);
-$bot->add_proxy_http('91.221.109.138:3128', $useragent);
-$bot->add_proxy_http('91.221.109.136:3128', $useragent);
 $bot->add_proxy_http('84.201.254.47:3128', $useragent);
+$bot->add_proxy_http('35.245.208.185:3128', $useragent);
+$bot->add_proxy_http('91.221.109.138:3128', $useragent);
 
 $bot->runProxyTest('https://httpstat.us/');
 

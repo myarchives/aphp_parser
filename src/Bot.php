@@ -3,14 +3,11 @@
 namespace aphp\Parser;
 
 abstract class BotH {
-	protected $_resetConfigAfterTask = false;
-
-	public $retryCount = [ 10 ];
-	public $sleepTimeout = [ 3 ];
-	public $maxProxyCount = 50;
-
-	public $retryCount_CSSResources = 4;
 	public $browsers = []; // [ Browser ]
+ 
+	public $currentSettings; // BotSettings
+	public $settingsDefault; // BotSettings
+	public $settingsCSS; // BotSettings
 
 	public $tempDir;
 	public $prefix = '';
@@ -29,7 +26,6 @@ abstract class BotH {
 	abstract public function downloadCSSResources( $url, $resourceDir, $root = true, $inputParser = null, $res = false );
 
 	abstract public function nextProxy();
-	abstract public function resetConfig();
 
 	abstract public function runProxyTest( $url );
 }
@@ -44,7 +40,7 @@ class Bot extends BotH {
 	// PROTECTED
 
 	public function addBrowser($userAgent) {
-		if (count($this->browsers) >= $this->maxProxyCount) {
+		if (count($this->browsers) >= $this->currentSettings->maxProxyCount) {
 			return null;
 		}
 		$browser = new Browser($userAgent, $this->tempDir, $this->prefix . count($this->browsers) . '_');
@@ -71,6 +67,10 @@ class Bot extends BotH {
 	public function __construct( $tempDir, $prefix = 'browser' ) {
 		$this->tempDir = $tempDir;
 		$this->prefix  = $prefix;
+		// settings
+		$this->currentSettings = new BotSettings();
+		$this->settingsDefault = $this->currentSettings;
+		$this->settingsCSS = new BotSettings();
 	}
 
 	public function setConfig(Config $config) {
@@ -79,9 +79,9 @@ class Bot extends BotH {
 		foreach ($proxyList as $proxy) {
 			$this->add_proxy_http(trim($proxy), $userAgentList->getAgent());
 		}
-		$this->retryCount[0]   = $config->retryCount;
-		$this->sleepTimeout[0] = $config->sleepTimeout;
-		$this->retryCount_CSSResources = $config->retryCount_CSSResources;
+		$this->settingsDefault = $config->botSettings_default();
+		$this->settingsCSS = $config->botSettings_css();
+		$this->currentSettings = $this->settingsDefault;
 	}
 
 	public function add_proxy_http($proxy, $userAgent) {
@@ -114,7 +114,7 @@ class Bot extends BotH {
 
 	public function runProxyTest( $url, $limit = 30 ) {
 		$browserList = [];
-		$sleepTimeout = $this->sleepTimeout[ count($this->sleepTimeout)-1 ];
+		$sleepTimeout = $this->currentSettings->sleepTimeout;
 		foreach ($this->browsers as $browser) {
 			if ($browser->navigate( $url )) {
 				$this->loggerInfo("proxyTest OK : {$browser->proxyName}");
@@ -135,10 +135,9 @@ class Bot extends BotH {
 	}
 
 	public function downloadCSSResources( $url, $resourceDir, $root = true, $inputParser = null, $res = false ) {
-		// set config
 		if (!$root) {
-			$this->retryCount[] = $this->retryCount_CSSResources;
-			$this->_resetConfigAfterTask = true;
+			// set css settings
+			$this->currentSettings = $this->settingsCSS;
 		}
 		if ($this->downloadFile($url)) {
 			// res dir
@@ -192,19 +191,13 @@ class Bot extends BotH {
 		$this->loggerInfo("nextBrowser : {$this->currentBrowser->proxyName}");
 	}
 
-	public function resetConfig() {
-		$this->_resetConfigAfterTask = false;
-		$this->retryCount = [ $this->retryCount[0] ];
-		$this->sleepTimeout = [ $this->sleepTimeout[0] ];
-	}
-
 	protected function runTask($task, $url) {
 		if (count($this->browsers) == 0) {
 			throw new NoProxy_Exception();
 		}
 		$this->loggerInfo("START $task : $url");
-		$retryCount = $this->retryCount[ count($this->retryCount)-1 ];
-		$sleepTimeout = $this->sleepTimeout[ count($this->sleepTimeout)-1 ];
+		$retryCount = $this->currentSettings->retryCount;
+		$sleepTimeout = $this->currentSettings->sleepTimeout;
 		while ($retryCount > 0) {
 			$result = $this->currentBrowser->{$task}($url);
 			if ($result) {
@@ -212,8 +205,9 @@ class Bot extends BotH {
 					sleep($sleepTimeout);
 				}
 				$this->loggerInfo("FINISH $task : $url");
-				if ($this->_resetConfigAfterTask) {
-					$this->resetConfig();
+				// settings reset
+				if ($this->currentSettings != $this->settingsDefault) {
+					$this->currentSettings = $this->settingsDefault;
 				}
 				return true;
 			}
@@ -231,8 +225,9 @@ class Bot extends BotH {
 			}
 		}
 		$this->loggerInfo("FAIL $task : $url");
-		if ($this->_resetConfigAfterTask) {
-			$this->resetConfig();
+		// settings reset
+		if ($this->currentSettings != $this->settingsDefault) {
+			$this->currentSettings = $this->settingsDefault;
 		}
 		return false;
 	}

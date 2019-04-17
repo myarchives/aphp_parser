@@ -20,7 +20,7 @@ class BotCSSDownloadTest extends Base_TestCase {
 	protected function setUp() {
 		$this->bot = new Bot( __DIR__ . '/temp' );
 		$this->bot->addBrowser( $this->userAgent );
-		$this->bot->sleepTimeout[0] = 0;
+		$this->bot->settingsCSS->sleepTimeout = 0;
 	}
 	
 	protected function tearDown() {
