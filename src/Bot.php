@@ -1,6 +1,7 @@
 <?php
 
 namespace aphp\Parser;
+use aphp\Foundation\SystemService;
 
 abstract class BotH {
 	public $browsers = []; // [ Browser ]
@@ -125,7 +126,7 @@ class Bot extends BotH {
 					break;
 				}
 				if ($sleepTimeout > 0) {
-					sleep($sleepTimeout);
+					SystemService::sleep($sleepTimeout);
 				}
 			} else {
 				$this->loggerInfo("proxyTest F : {$browser->proxyName}");
@@ -202,7 +203,7 @@ class Bot extends BotH {
 			$result = $this->currentBrowser->{$task}($url);
 			if ($result) {
 				if ($sleepTimeout > 0) {
-					sleep($sleepTimeout);
+					SystemService::sleep($sleepTimeout);
 				}
 				$this->loggerInfo("FINISH $task : $url");
 				// settings reset
@@ -214,14 +215,14 @@ class Bot extends BotH {
 			$code = $this->currentBrowser->client->get_http_response_code();
 			if ($code == 404) {
 				if ($sleepTimeout > 0) {
-					sleep($sleepTimeout);
+					SystemService::sleep($sleepTimeout);
 				}
 				return false;
 			}
 			$retryCount--;
 			$this->nextProxy();
 			if ($sleepTimeout > 0) {
-				sleep($sleepTimeout);
+				SystemService::sleep($sleepTimeout);
 			}
 		}
 		$this->loggerInfo("FAIL $task : $url");

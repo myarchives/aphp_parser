@@ -12,7 +12,7 @@ One file
 phpunit --bootstrap tests/bootstrap_autoload.php tests/%file%Test.php --debug
 
 One test
-phpunit --bootstrap tests/bootstrap_autoload.php --filter %method% %file%Test tests/%file%Test.php --debug
+phpunit --bootstrap tests/bootstrap_autoload.php --filter %method% tests/%file%Test.php --debug
 */
 
 require __DIR__ . '/../vendor/autoload.php';
