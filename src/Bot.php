@@ -213,7 +213,7 @@ class Bot extends BotH {
 				return true;
 			}
 			$code = $this->currentBrowser->client->get_http_response_code();
-			if ($code == 404) {
+			if ($code >= 401 && $code < 500) {
 				if ($sleepTimeout > 0) {
 					SystemService::sleep($sleepTimeout);
 				}
