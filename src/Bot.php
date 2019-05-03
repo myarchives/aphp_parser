@@ -78,7 +78,11 @@ class Bot extends BotH {
 		$proxyList = explode("\n", $config->proxyURLs_text);
 		$userAgentList = new UserAgentList($config->userAgentList);
 		foreach ($proxyList as $proxy) {
-			$this->add_proxy_http(trim($proxy), $userAgentList->getAgent());
+			$browser = $this->add_proxy_http(trim($proxy), $userAgentList->getAgent());
+			if ($browser) {
+				$browser->client->urlTimeout  = $config->urlTimeout;
+				$browser->client->fileTimeout = $config->fileTimeout;
+			}
 		}
 		$this->settingsDefault = $config->botSettings_default();
 		$this->settingsCSS = $config->botSettings_css();
@@ -87,18 +91,20 @@ class Bot extends BotH {
 
 	public function add_proxy_http($proxy, $userAgent) {
 		$browser = $this->addBrowser($userAgent);
-		if (!$browser) return;
+		if (!$browser) return null;
 		$this->loggerInfo("add_proxy_http $proxy");
 		$browser->client->set_proxy_http($proxy);
 		$browser->proxyName = $proxy;
+		return $browser;
 	}
 
 	public function add_proxy_socks4($proxy, $userAgent) {
 		$browser = $this->addBrowser($userAgent);
-		if (!$browser) return;
+		if (!$browser) return null;
 		$this->loggerInfo("add_proxy_socks4 $proxy");
 		$browser->client->set_proxy_socks4($proxy);
 		$browser->proxyName = $proxy;
+		return $browser;
 	}
 
 	public function navigate ( $url ) {
@@ -213,7 +219,7 @@ class Bot extends BotH {
 				return true;
 			}
 			$code = $this->currentBrowser->client->get_http_response_code();
-			if ($code >= 401 && $code < 500) {
+			if ($code >= 401 && $code < 500 && $code != 429) {
 				if ($sleepTimeout > 0) {
 					SystemService::sleep($sleepTimeout);
 				}

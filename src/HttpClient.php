@@ -6,7 +6,7 @@ abstract class HttpClientH {
 	public $ch;
 	public $last_url;
 	public $urlTimeout = 30;
-	public $fileTimeout = 60;
+	public $fileTimeout = 120;
 
 	abstract public function set_referrer($referrer_url);
 	abstract public function set_user_agent($useragent);

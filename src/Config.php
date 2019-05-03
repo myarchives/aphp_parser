@@ -20,7 +20,9 @@ https://webanetlabs.net/publ/24
 */
 	public $proxyURLs_text = ''; // text of proxy URLs, manual or automatic set
 	public $userAgentList = __DIR__ . '/../textFiles/useragents.txt'; // file
-
+	public $urlTimeout = 30;
+	public $fileTimeout = 120;
+	
 	public function botSettings_default() {
 		$settings = new BotSettings();
 		//$settings->retryCount = 10;
