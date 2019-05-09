@@ -1,29 +1,28 @@
 <?php
-
 namespace aphp\Parser;
+use aphp\Files\File;
 
 abstract class BrowserH {
 	public $client = null; // HttpClient
 	public $prefix = '';
 	public $proxyName = '';
 	protected $rawdata = null; // raw data returned by the last query
-	protected $tempFileExt = null;
-	protected $tempFileMime = null;
 
 	protected $cookieFile = 'cookies.txt';
-	protected $tempFile = 'download.bin';
+	protected $tempFile = null; // aphp\Files\File
+	protected $tempFileDownloaded = false;
 
 	abstract public function navigate ( $url );
-	abstract public function downloadImage( $url );
 	abstract public function downloadFile( $url );
 
 	abstract public function getData(); // null OR string
-	abstract public function getImageFileExt(); // png, jpg, gif, svg
 
-
-	abstract public function getTempFileMime(); // mime string
-	abstract public function getTempFileName();
-	abstract public function tempFileMimeIsImage();
+	// aphp\Files\File
+	public function getTempFile()     { return $this->tempFile; }
+	// aphp\Files\FilePath
+	public function getTempFilePath() { return $this->tempFile->filepath(); }
+	// string
+	public function getTempFileName() { return $this->tempFile->filepath()->getPath(); }
 
 	abstract public function isNavigateSucceed();
 	abstract public function isDownloadSucceed();
@@ -39,28 +38,22 @@ class Browser extends BrowserH {
 	// PROTECTED
 
 	protected function resolveUrl ( $url ) {
-		$url = trim ( $url );
-
+		$url = trim ($url);
 		// Absolute URLs are fine
-		if ( strpos ( $url, 'http' ) === 0 ) {
+		if (strpos( strtolower($url), 'http' ) === 0) {
 			return $url;
 		}
-
 		// Empty URLs represent current URL
-		if ( $url === '' ) {
+		if ($url === '') {
 			return $this->client->get_effective_url();
 		}
 
-		/**
-		 * If the URL begins with a forwards slash, it is absolute based on the current hostname
-		 */
-		$effective_url = $this->client->get_effective_url();
-		if ( $url[0] === '/' ) {
-			$port = ':' . parse_url ( $effective_url, PHP_URL_PORT );
-			return parse_url ( $effective_url, PHP_URL_SCHEME ) . '://' . parse_url ( $effective_url, PHP_URL_HOST ) . ( $port !== ':' ? $port : '' ) . $url;
+		$path = new Path($this->client->get_effective_url());
+		$newUrl = $path->relativeToAbsolute($url);
+		if (!$newUrl) {
+			throw ResolveURL_Exception::urlException($url);
 		}
-		
-		throw ResolveURL_Exception::urlException($url);
+		return $newUrl;
 	}
 
 	// Override
@@ -77,7 +70,7 @@ class Browser extends BrowserH {
 
 		$this->prefix = $prefix;
 		$this->cookieFile = $tempDir . '/' . $prefix . $this->cookieFile;
-		$this->tempFile = $tempDir . '/' . $prefix . $this->tempFile;
+		$this->tempFile = new File($tempDir . '/' . $prefix . 'download.temp');
 
 		$this->client->store_cookies( $this->cookieFile );
 		$this->client->set_headers([
@@ -106,31 +99,18 @@ class Browser extends BrowserH {
 		return $this->isNavigateSucceed();
 	}
 
-	public function downloadImage( $url ) {
-		$this->downloadFile($url);
-		if ($this->isDownloadSucceed()) {
-			if ($this->tempFileMimeIsImage() == false) {
-				$this->tempFileMime = null;
-				$this->tempFileExt = null;
-			}
-		}
-		return $this->isDownloadSucceed();
-	}
-
 	public function downloadFile( $url ) {
 		$newurl = $this->resolveUrl ( $url );
 		if ($this->logger) {
 			$this->logger->info("DW  : $newurl");
 		}
-		$this->tempFileExt = null;
-		$fp = fopen($this->tempFile, 'w');
-		if ( $this->client->fetch_file ( $newurl, $fp ) ) {
-			fclose($fp);
-			$this->tempFileMime = mime_content_type($this->tempFile);
-		} else {
-			fclose($fp);
-			$this->tempFileMime = null;
-		}
+		$this->tempFile->reset();
+		$this->tempFileDownloaded = false;
+
+		$fp = fopen($this->getTempFileName(), 'w');
+		$this->tempFileDownloaded = (true == $this->client->fetch_file( $newurl, $fp ));
+		fclose($fp);
+		
 		if ($this->isDownloadSucceed()) {
 			if ($this->logger) {
 				$this->logger->info("200 : " . $this->client->last_url);
@@ -147,42 +127,11 @@ class Browser extends BrowserH {
 		return $this->rawdata;
 	}
 
-	public function getImageFileExt() {
-		return $this->tempFileExt;
-	}
-
-	public function getTempFileMime() {
-		return $this->tempFileMime;
-	}
-
-	public function tempFileMimeIsImage() {
-		$mime = $this->tempFileMime;
-		if (strpos($mime, 'png') !== false) {
-			$this->tempFileExt = '.png';
-		}
-		elseif (strpos($mime, 'jpeg') !== false) {
-			$this->tempFileExt = '.jpg';
-		}
-		elseif (strpos($mime, 'gif') !== false) {
-			$this->tempFileExt = '.gif';
-		}
-		elseif (strpos($mime, 'svg') !== false) {
-			$this->tempFileExt = '.svg';
-		} else {
-			return false;
-		}
-		return true;
-	}
-
-	public function getTempFileName() {
-		return $this->tempFile;
-	}
-
 	public function isNavigateSucceed() {
 		return ($this->rawdata !== null);
 	}
 
 	public function isDownloadSucceed() {
-		return ($this->tempFileMime !== null);
+		return $this->tempFileDownloaded;
 	}
 }

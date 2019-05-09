@@ -1,7 +1,8 @@
 <?php
-
 namespace aphp\Parser;
 use aphp\Foundation\SystemService;
+use aphp\Files\FilePath;
+use aphp\Files\File;
 
 abstract class BotH {
 	public $browsers = []; // [ Browser ]
@@ -22,7 +23,6 @@ abstract class BotH {
 	abstract public function addBrowser($userAgent);
 
 	abstract public function navigate ( $url );
-	abstract public function downloadImage( $url );
 	abstract public function downloadFile( $url );
 	abstract public function downloadCSSResources( $url, $resourceDir, $root = true, $inputParser = null, $res = false );
 
@@ -111,10 +111,6 @@ class Bot extends BotH {
 		return $this->runTask('navigate', $url);
 	}
 
-	public function downloadImage ( $url ) {
-		return $this->runTask('downloadImage', $url);
-	}
-
 	public function downloadFile ( $url ) {
 		return $this->runTask('downloadFile', $url);
 	}
@@ -147,30 +143,26 @@ class Bot extends BotH {
 			$this->currentSettings = $this->settingsCSS;
 		}
 		if ($this->downloadFile($url)) {
-			// res dir
-			if (!is_dir($resourceDir . '/res')) {
-				mkdir($resourceDir . '/res');
-			}
 			// file
-			$ext =  Path::extractExt($url);
-			if ($root) {
-				$dir = $resourceDir;
-				$fileName = Path::filteredUrl($url) . ($ext=='.bin' ? $ext : '.html');
-			} else {
-				$dir = $resourceDir . '/res';
-				$fileName = md5_file($this->currentBrowser->getTempFileName()). $ext;
+			$filePath = new FilePath( Path::filteredUrl($url) );
+			if (!$filePath->extension()) {
+				$filePath->replaceExtension('html');
 			}
-			$dirFileName = $dir . '/' . $fileName;
-			copy($this->currentBrowser->getTempFileName(), $dirFileName);
+			if ($root) {
+				$filePath->replacePath($resourceDir);
+			} else {
+				$filePath->replacePath($resourceDir . '/res');
+				$filePath->replaceFileName( md5_file($this->currentBrowser->getTempFileName()) , false);
+			}
+			$this->currentBrowser->getTempFilePath()->copy($filePath);
 			// inputParser
 			if ($inputParser) {
-				$inputParser->mapFileToLink($url, ($res ? 'res/' : '') . $fileName);
+				$inputParser->mapFileToLink($url, ($res ? 'res/' : '') . $filePath->fileName() );
 			}
-			$mime = $this->currentBrowser->getTempFileMime();
 			// resources
-			if ($root || (strpos($mime, 'text/') !== false)) {
+			if ($root || $this->currentBrowser->getTempFile()->isText() ) {
 				$styleParser = new StyleParser();
-				$text = file_get_contents($dirFileName);
+				$text = file_get_contents( $filePath->getPath() );
 				if ($root) {
 					$links = $styleParser->parseHTMLLinks($url, $text);
 				} else {
@@ -180,7 +172,7 @@ class Bot extends BotH {
 					$this->downloadCSSResources($link, $resourceDir, false, $styleParser, $root);
 				}
 				$text = $styleParser->replaceLinksInText($text);
-				file_put_contents($dirFileName, $text);
+				file_put_contents($filePath->getPath(), $text);
 			}
 			return true;
 		}

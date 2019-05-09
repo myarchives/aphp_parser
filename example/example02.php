@@ -18,12 +18,9 @@ $tempDir = __DIR__ . '/temp';
 $browser = new Browser($useragent, $tempDir);
 $browser->setLogger($logger);
 
-$browser->downloadImage('http://www.djswebdesign.com/wp-content/uploads/2012/05/PHP-MySQL.png');
-if ($browser->isDownloadSucceed()) {
-	copy($browser->getTempFileName(), $tempDir . '/image' . $browser->getImageFileExt());
-}
-
 $browser->downloadFile('http://d3g0gp89917ko0.cloudfront.net/v--b23e476b7ade/common--theme/base/images/editor/icons3.png');
 if ($browser->isDownloadSucceed()) {
-	copy($browser->getTempFileName(), $tempDir . '/filename.png');
+	$target = __DIR__ . '/dw/filename.' . $browser->getTempFile()->mimeExtension();
+	copy( $browser->getTempFileName(), $target );
+	echo 'file downloaded ' . $target . PHP_EOL;
 }

@@ -4,4 +4,4 @@ composer.lock
 example/dw
 example/temp
 tests/temp
-tests/dw/res
+tests/dw

@@ -90,5 +90,20 @@ class PathTest extends Base_TestCase {
 		);
 	}
 
-}
+	public function test_domain() {
+		$domainPath = new Path('http://cloudfront.net');
 
+		$p1_relative = $domainPath->relativeToAbsolute('http://d3g0gp89917ko0.cloudfront.net/home');
+		$this->assertTrue( $domainPath->isDomainUrl($p1_relative) );
+		$p1_relative = $domainPath->relativeToAbsolute('http://cloudfront.net/home');
+		$this->assertTrue( $domainPath->isDomainUrl($p1_relative) );
+
+		$p2_relative = $domainPath->relativeToAbsolute('http://google.com/home');
+		$this->assertTrue( false == $domainPath->isDomainUrl($p2_relative) );
+	}
+
+	public function test_extract() {
+		$z = Path::filteredUrl('http://d3g0gp89917ko0.cloudfront.net/v--b23e476b7ade/common--theme/base/image.png');
+		$this->assertEquals( 'e476b7adecommon--themebaseimage.png', $z);
+	}
+}

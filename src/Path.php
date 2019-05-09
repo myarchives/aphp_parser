@@ -12,7 +12,6 @@ abstract class PathH {
 	abstract public function isDomainUrl($url);
 
 	// static function filteredUrl($url)
-	// static function extractExt($url, $default = '.bin')
 }
 
 // ---------
@@ -32,27 +31,16 @@ class Path extends PathH {
 	const URL_QUERY = 3;
 	const URL_FRAGMENT = 4;
 	const URL_ISDIR = 5;
+	static $filteredUrlMaxLength = 35;
 
 	// STATIC
 
 	static function filteredUrl($url) {
 		$url = preg_replace("#([^\w\s\d\.\-_\[\]\(\)]|[\.]{2,})#", '', strtolower($url));
-		if (strlen($url)>35) {
-			$url = substr($url, strlen($url)-35 , 35 );
+		if (strlen($url) > self::$filteredUrlMaxLength) {
+			$url = substr($url, strlen($url)-self::$filteredUrlMaxLength , self::$filteredUrlMaxLength );
 		}
 		return $url;
-	}
-
-	static function extractExt($url, $default = '.bin') {
-		$path = new Path($url);
-		$ext = explode('.', self::filteredUrl($path->filePath()));
-		if (count($ext)>1) {
-			$ext_last = array_pop($ext);
-			if (strlen($ext_last)>0) {
-				return '.' . strtolower($ext_last);
-			}
-		}
-		return $default;
 	}
 
 	// PUBLIC

@@ -39,7 +39,7 @@ class BotCSSDownloadTest extends Base_TestCase {
 			'.',
 			'..',
 			'.gitkeep',
-			'httplocalhost8009.bin',
+			'httplocalhost8009.html',
 			'res'
 		]);
 		$this->assertEquals($files_res, [

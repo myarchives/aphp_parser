@@ -58,21 +58,21 @@ class BrowserTest extends Base_TestCase {
 	}
 
 	public function test_downloadImage() {
-		$this->browser->downloadImage('http://localhost:8008/png-image.png');
+		$this->browser->downloadFile('http://localhost:8008/png-image.png');
 		$this->assertTrue( $this->browser->isDownloadSucceed() );
-		$this->assertEquals( '.png', $this->browser->getImageFileExt() );
+		$this->assertEquals( 'png', $this->browser->getTempFile()->mimeExtension() );
 
-		$this->browser->downloadImage('http://localhost:8008/jpg-image.jpg');
+		$this->browser->downloadFile('http://localhost:8008/jpg-image.jpg');
 		$this->assertTrue( $this->browser->isDownloadSucceed() );
-		$this->assertEquals( '.jpg', $this->browser->getImageFileExt() );
+		$this->assertEquals( 'jpg', $this->browser->getTempFile()->mimeExtension() );
 
-		$this->browser->downloadImage('http://localhost:8008/gif-image.gif');
+		$this->browser->downloadFile('http://localhost:8008/gif-image.gif');
 		$this->assertTrue( $this->browser->isDownloadSucceed() );
-		$this->assertEquals( '.gif', $this->browser->getImageFileExt() );
+		$this->assertEquals( 'gif', $this->browser->getTempFile()->mimeExtension() );
 
-		$this->browser->downloadImage('http://localhost:8008/svg-image.svg');
+		$this->browser->downloadFile('http://localhost:8008/svg-image.svg');
 		$this->assertTrue( $this->browser->isDownloadSucceed() );
-		$this->assertEquals( '.svg', $this->browser->getImageFileExt() );
+		$this->assertEquals( 'svg', $this->browser->getTempFile()->mimeExtension() );
 	}
 
 	public function test_navigate2() {
@@ -80,10 +80,6 @@ class BrowserTest extends Base_TestCase {
 		
 		$this->assertTrue( $this->browser->isNavigateSucceed() );
 		$this->assertContains( $this->userAgent, $this->browser->getData() );
-
-		$this->browser->downloadImage('http://localhost:8008/png-image.png');
-		$this->assertTrue( $this->browser->isDownloadSucceed() );
-		$this->assertEquals( '.png', $this->browser->getImageFileExt() );
 
 		$this->browser->navigate('http://localhost:8008/200.php');
 		
