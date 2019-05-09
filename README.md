@@ -38,6 +38,7 @@ echo $browser->getData();
 * Download pages with CSS.
 * HTTP, HTTPS.
 * Proxy.
+* Example App.
 
 ## Syntax
 ### Browser class.
@@ -47,24 +48,23 @@ class Browser {
 	public $prefix = '';
 	public $proxyName = '';
 	protected $rawdata = null; // raw data returned by the last query
-	protected $tempFileExt = null;
-	protected $tempFileMime = null;
 
 	protected $cookieFile = 'cookies.txt';
-	protected $tempFile = 'download.bin';
-
+	protected $tempFile = null; // aphp\Files\File
+	protected $tempFileDownloaded = false;
+	// bool
 	public function navigate ( $url );
-	public function downloadImage( $url );
 	public function downloadFile( $url );
 
 	public function getData(); // null OR string
-	public function getImageFileExt(); // png, jpg, gif, svg
 
-
-	public function getTempFileMime(); // mime string
+	// aphp\Files\File
+	public function getTempFile();
+	// aphp\Files\FilePath
+	public function getTempFilePath();
+	// string
 	public function getTempFileName();
-	public function tempFileMimeIsImage();
-
+	// bool
 	public function isNavigateSucceed();
 	public function isDownloadSucceed();
 }
@@ -94,18 +94,12 @@ if ($this->isNavigateSucceed()) {
 	echo $browser->getData();
 }
 ```
-### Image Download
-```php
-$browser->downloadImage('http://www.djswebdesign.com/wp-content/uploads/2012/05/PHP-MySQL.png');
-if ($browser->isDownloadSucceed()) {
-	copy($browser->getTempFileName(), __DIR__ . '/image' . $browser->getImageFileExt());
-}
-```
 ### File Download
 ```php
 $browser->downloadFile('https://www.lifeonnetwork.com/wp-content/uploads/2017/11/download.png');
 if ($browser->isDownloadSucceed()) {
-	copy($browser->getTempFileName(), __DIR__ . '/filename.png');
+	$target = __DIR__ . '/dw/filename.' . $browser->getTempFile()->mimeExtension();
+	copy($browser->getTempFileName(), $target);
 }
 ```
 ## Bot
@@ -136,7 +130,6 @@ class Bot {
 	public function addBrowser($userAgent);
 
 	public function navigate ( $url );
-	public function downloadImage( $url );
 	public function downloadFile( $url );
 	public function downloadCSSResources( $url, $resourceDir);
 
@@ -190,7 +183,7 @@ $result = $bot->navigate( 'https://httpstat.us/' );
 if ($result) {
 	echo $bot->currentBrowser->getData();
 }
-$result = $bot->downloadFile( 'https://httpstat.us/' ); // downloadImage
+$result = $bot->downloadFile( 'https://httpstat.us/' ); 
 if ($result) {
 	copy( $bot->currentBrowser->getTempFileName(), __DIR__ . '/dw/file.html' );
 }
@@ -215,6 +208,10 @@ if ($bot->downloadCSSResources('https://httpstat.us/', __DIR__ . '/dw')) {
 ```php
 $bot->nextProxy();
 ```
+## App example
+See 
+* [exampleApp.php](example/exampleApp.php)
+* [example03.php](example/example03.php)
 ## More features
 For more features:
 * Read source of [HttpClient](src/HttpClient.php) class

@@ -11,7 +11,7 @@ abstract class BrowserH {
 	protected $cookieFile = 'cookies.txt';
 	protected $tempFile = null; // aphp\Files\File
 	protected $tempFileDownloaded = false;
-
+	// bool
 	abstract public function navigate ( $url );
 	abstract public function downloadFile( $url );
 
@@ -23,9 +23,9 @@ abstract class BrowserH {
 	public function getTempFilePath() { return $this->tempFile->filepath(); }
 	// string
 	public function getTempFileName() { return $this->tempFile->filepath()->getPath(); }
-
-	abstract public function isNavigateSucceed();
-	abstract public function isDownloadSucceed();
+	// bool
+	public function isNavigateSucceed() { return ($this->rawdata !== null); }
+	public function isDownloadSucceed() { return $this->tempFileDownloaded; }
 }
 
 // ------------------------
@@ -125,13 +125,5 @@ class Browser extends BrowserH {
 	
 	public function getData() {
 		return $this->rawdata;
-	}
-
-	public function isNavigateSucceed() {
-		return ($this->rawdata !== null);
-	}
-
-	public function isDownloadSucceed() {
-		return $this->tempFileDownloaded;
 	}
 }
