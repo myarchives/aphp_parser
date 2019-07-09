@@ -212,6 +212,17 @@ $bot->nextProxy();
 See 
 * [exampleApp.php](example/exampleApp.php)
 * [example03.php](example/example03.php)
+
+## Test running
+
+* install __phpunit, composer, php__ if not installed
+* run __composer install__ at package dir
+* run __tests/startServer.bat__
+* run __tests/css-webserver/startServer.bat__
+* run __tests/startTest.bat__
+
+On linux use *.sh files like *.bat files
+
 ## More features
 For more features:
 * Read source of [HttpClient](src/HttpClient.php) class
