@@ -29,34 +29,6 @@ class BrowserTest extends Base_TestCase {
 	}
 	
 	// tests
-	
-	public function test_navigate() {
-		$this->browser->navigate('http://localhost:8008/200.php');
-		
-		$this->assertTrue( $this->browser->isNavigateSucceed() );
-		$this->assertContains( $this->userAgent, $this->browser->getData() );
-	}
-
-	public function test_navigateError() {
-		$this->browser->navigate('http://localhost:8008/404.php');
-		
-		$this->assertTrue( $this->browser->isNavigateSucceed() == false );
-	}
-
-	public function test_downloadFile() {
-		$this->browser->downloadFile('http://localhost:8008/png-image.png');
-
-		$this->assertTrue( $this->browser->isDownloadSucceed() );
-
-		$this->assertFileEquals( $this->browser->getTempFileName(), __DIR__ . '/webserver/png-image.png');
-	}
-
-	public function test_downloadFileError() {
-		$this->browser->downloadFile('http://localhost:8010/png-image.png');
-
-		$this->assertTrue( $this->browser->isDownloadSucceed() == false );
-	}
-
 	public function test_downloadImage() {
 		$this->browser->downloadFile('http://localhost:8008/png-image.png');
 		$this->assertTrue( $this->browser->isDownloadSucceed() );
@@ -65,25 +37,5 @@ class BrowserTest extends Base_TestCase {
 		$this->browser->downloadFile('http://localhost:8008/jpg-image.jpg');
 		$this->assertTrue( $this->browser->isDownloadSucceed() );
 		$this->assertEquals( 'jpg', $this->browser->getTempFile()->mimeExtension() );
-
-		$this->browser->downloadFile('http://localhost:8008/gif-image.gif');
-		$this->assertTrue( $this->browser->isDownloadSucceed() );
-		$this->assertEquals( 'gif', $this->browser->getTempFile()->mimeExtension() );
-
-		$this->browser->downloadFile('http://localhost:8008/svg-image.svg');
-		$this->assertTrue( $this->browser->isDownloadSucceed() );
-		$this->assertEquals( 'svg', $this->browser->getTempFile()->mimeExtension() );
-	}
-
-	public function test_navigate2() {
-		$this->browser->navigate('http://localhost:8008/200.php');
-		
-		$this->assertTrue( $this->browser->isNavigateSucceed() );
-		$this->assertContains( $this->userAgent, $this->browser->getData() );
-
-		$this->browser->navigate('http://localhost:8008/200.php');
-		
-		$this->assertTrue( $this->browser->isNavigateSucceed() );
-		$this->assertContains( $this->userAgent, $this->browser->getData() );
 	}
 }

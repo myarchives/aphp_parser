@@ -9,8 +9,8 @@
 	"minimum-stability": "dev",
 	"require": {
 		"psr/log": "~1.0",
-		"aphp/foundation": "~1.0",
-		"aphp/files": "~1.0"
+		"aphp/files": "~1.0.0",
+		"aphp/http-client": "~1.0.0"
 	},
 	"require-dev": {
 		"aphp/router": "~1.0",

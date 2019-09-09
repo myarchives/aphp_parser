@@ -13,12 +13,6 @@ class BaseException extends \RuntimeException {
 
 // ----
 
-class ResolveURL_Exception extends BaseException {
-	public static function urlException($url) {
-		return self::createException('url %s', $value);
-	}
-}
-
 class NoProxy_Exception extends BaseException {
 
 }

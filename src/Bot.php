@@ -1,6 +1,5 @@
 <?php
 namespace aphp\Parser;
-use aphp\Foundation\SystemService;
 use aphp\Files\FilePath;
 use aphp\Files\File;
 
@@ -128,7 +127,7 @@ class Bot extends BotH {
 					break;
 				}
 				if ($sleepTimeout > 0) {
-					SystemService::sleep($sleepTimeout);
+					$this->sleep($sleepTimeout);
 				}
 			} else {
 				$this->loggerInfo("proxyTest F : {$browser->proxyName}");
@@ -201,7 +200,7 @@ class Bot extends BotH {
 			$result = $this->currentBrowser->{$task}($url);
 			if ($result) {
 				if ($sleepTimeout > 0) {
-					SystemService::sleep($sleepTimeout);
+					$this->sleep($sleepTimeout);
 				}
 				$this->loggerInfo("FINISH $task : $url");
 				// settings reset
@@ -213,14 +212,14 @@ class Bot extends BotH {
 			$code = $this->currentBrowser->client->get_http_response_code();
 			if ($code >= 401 && $code < 500 && $code != 429) {
 				if ($sleepTimeout > 0) {
-					SystemService::sleep($sleepTimeout);
+					$this->sleep($sleepTimeout);
 				}
 				return false;
 			}
 			$retryCount--;
 			$this->nextProxy();
 			if ($sleepTimeout > 0) {
-				SystemService::sleep($sleepTimeout);
+				$this->sleep($sleepTimeout);
 			}
 		}
 		$this->loggerInfo("FAIL $task : $url");
@@ -229,5 +228,9 @@ class Bot extends BotH {
 			$this->currentSettings = $this->settingsDefault;
 		}
 		return false;
+	}
+
+	protected function sleep($time) {
+		\usleep($time * 1000000);
 	}
 }
