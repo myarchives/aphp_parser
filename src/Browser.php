@@ -2,18 +2,18 @@
 namespace aphp\Parser;
 use aphp\Files\File;
 use aphp\HttpClient\Browser as ABrowser;
+use aphp\HttpClient\BrowserConfig;
 
 // ------------------------
 // Browser
 // ------------------------
 
 class Browser extends ABrowser {
-	public function __construct( $userAgent, $tempDir, $prefix = 'browser_' )
+	public function __construct(BrowserConfig $config)
 	{
 		$this->fileClass = File::class;
-		parent::__construct($userAgent, $tempDir, $prefix);
+		parent::__construct($config);
 	}
-
 	public function getTempFileName()
 	{
 		return $this->tempFile->filepath()->getPath();

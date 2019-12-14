@@ -1,235 +1,207 @@
 # Parser
 
-![PHP Support](https://img.shields.io/badge/php%20tested-5.6-brightgreen.svg)
-![PHP Support](https://img.shields.io/badge/php%20tested-7.1-brightgreen.svg)
+![PHP Support](https://img.shields.io/badge/php-5.6-brightgreen.svg)
+![PHP Support](https://img.shields.io/badge/php-7-brightgreen.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Travis](https://api.travis-ci.org/GonistLelatel/aphp_parser.svg?branch=master)
 
 ## Introduction
 
-`Parser` is a basic curl wrapper for PHP.<br>
-See [php.net/curl](https://www.php.net/curl) for more information about the libcurl extension for PHP.
+`Parser` is a curl browser with automatic proxy reconnect logic.
+
+* See [php.net/curl](https://www.php.net/curl) for more information about the libcurl extension for PHP.
+* See [aphp/http-client](https://github.com/GonistLelatel/aphp_httpclient)
 
 ## Installation
-PHP5.6 , PHP7.0+
 
-`composer require aphp/parser`
+### Version 2
+Recomended
 
-## Hello world
+`composer require aphp/parser ~2.0.0`
+
+### Version 1
+Vesion 1 is not flexible and used only for non-auth parsing. Used http-client ~1.0.0 .<br>
+https://github.com/GonistLelatel/aphp_parser/tree/1.0.9
+
+`composer require aphp/parser ~1.0.0`
+
+## Usage
+
+Usage for parser is not simple, because its needed the application with container architecture to resolve constructor dependencies.
+
+### App example
+
+* See [ExampleApp.php](example2/app/ExampleApp.php)
+* See [phpbbauth.php](example2/phpbbauth.php)
+
+### Simple example
 
 ```php
-require 'vendor/autoload.php';
-use aphp\Parser\Browser;
+<?php
+require __DIR__ .'/../vendor/autoload.php';
+use aphp\Parser\Bot;
+use aphp\Parser\BotSettings;
+use aphp\Logger\FileLogger;
+use aphp\HttpClient\BrowserConfig;
 
-set_time_limit(0); //  Limits the maximum execution time, unlimited
+@mkdir( __DIR__ . '/logs');
+@mkdir( __DIR__ . '/temp');
 
-$useragent = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36';
+$logger = new FileLogger();
+$logger->configure( __DIR__ . '/logs/log' );
+$logger->startLog();
 
-$browser = new Browser($useragent, __DIR__);
-$browser->navigate('https://httpstat.us/');
+$settings = new BotSettings();
+$settings->browserConfig = new BrowserConfig( __DIR__ . '/temp' );
+$settings->proxyList = [ '' ]; // usage without proxies, with local machine ip
 
-echo $browser->getData();
+$bot = new Bot( $settings );
+$bot->setLogger( $logger );
+
+$r = $bot->runTaskNoChangeProxy(function() use($bot){
+    return $bot->navigate('https://httpstat.us');
+});
+if ($r) {
+    echo $bot->getData();
+} else {
+    echo 'failed';
+}
 ```
 
 ## Features
 
-* Browser with cookies.
-* Download files.
-* Download pages with CSS.
-* HTTP, HTTPS.
-* Proxy.
-* Example App.
+* Proxy reconnect logic.
+* Auth logic.
+* Usage examples.
 
 ## Syntax
-### Browser class.
+
+BotSettings is using for store setting.
+
 ```php
-class Browser {
-	public $client = null; // HttpClient
-	public $prefix = '';
-	public $proxyName = '';
-	protected $rawdata = null; // raw data returned by the last query
+class BotSettings
+{
+    public $retryCount = 10;
+    public $retryPerProxy = 3;
+    public $sleepTimeout = 0.5;
+    public $newIPCookies = true;
+    public $newUserAgent = true;
+    public $currentProxyIndex = 0;
 
-	protected $cookieFile = 'cookies.txt';
-	protected $tempFile = null; // aphp\Files\File
-	protected $tempFileDownloaded = false;
-	// bool
-	public function navigate ( $url );
-	public function downloadFile( $url );
-
-	public function getData(); // null OR string
-
-	// aphp\Files\File
-	public function getTempFile();
-	// aphp\Files\FilePath
-	public function getTempFilePath();
-	// string
-	public function getTempFileName();
-	// bool
-	public function isNavigateSucceed();
-	public function isDownloadSucceed();
+    public $proxyList = [];
+    public $userAgentList = [];
+    public $browserConfig = null; // BrowserConfig
+    public $authLogic = null; // AuthLogic
 }
 ```
-### Initialization
+### AuthLogic
+AuthLogic is using for custom auth logic.<br>
+AuthLogic use the `Closure` architecture, not inheritance.<br>
+All properties are public and can be re-set.
 ```php
-set_time_limit(0); //  Limits the maximum execution time, unlimited
+class AuthLogic
+{
+    public $_isAuth = false;
+    public $_bot = null; // Bot
 
-$userAgent = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36';
-
-$browser = new Browser( $userAgent, 'dirForCookiesAndFiles' );
-$browser->setLogger( $logger ); // optional
-```
-### GET Text
-```php
-$browser->navigate('https://httpstat.us/');
-echo $browser->getData();
-```
-### Error detection
-```php
-if ($browser->navigate('https://httpstat.us/')) {
-	echo $browser->getData();
-}
-
-$browser->navigate('https://httpstat.us/');
-if ($this->isNavigateSucceed()) {
-	echo $browser->getData();
-}
-```
-### File Download
-```php
-$browser->downloadFile('https://www.lifeonnetwork.com/wp-content/uploads/2017/11/download.png');
-if ($browser->isDownloadSucceed()) {
-	$target = __DIR__ . '/dw/filename.' . $browser->getTempFile()->mimeExtension();
-	copy($browser->getTempFileName(), $target);
-}
-```
-## Bot
-Bot class used to failsafe downloading with multiple proxies and browsers.
-```php
-class BotSettings {
-	public $retryCount = 10;
-	public $sleepTimeout = 3;
-	public $maxProxyCount = 75;
-}
-
-class Bot {
-	public $browsers = []; // [ Browser ]
- 
-	public $currentSettings; // BotSettings
-	public $settingsDefault; // BotSettings
-	public $settingsCSS; // BotSettings
-
-	public $tempDir;
-	public $prefix = '';
-
-	public $currentBrowser; // Browser
-
-	public function setConfig(Config $config);
-
-	public function add_proxy_http($proxy, $userAgent);
-	public function add_proxy_socks4($proxy, $userAgent);
-	public function addBrowser($userAgent);
-
-	public function navigate ( $url );
-	public function downloadFile( $url );
-	public function downloadCSSResources( $url, $resourceDir);
-
-	public function nextProxy();
-	public function runProxyTest( $url );
+    public function __construct()
+    {
+        $this->isAuth = function() {
+            return $this->_isAuth;
+        };
+        $this->doAuth = function() {
+            // logic
+            $this->_isAuth = true;
+            return true;
+        };
+        // Events
+        $this->resetCookiesEvent = function() {
+            $this->_isAuth = false;
+        };
+        $this->responseEvent = function() {
+            $code = $this->_bot->client->get_http_response_code();
+            if ($code >= 401 && $code < 500 && $code != 429) {
+                sleep(1);
+                return true;
+            }
+            return false;
+        };
+        $this->failEvent = function() {
+            // logic
+            return false;
+        };
+    }
 }
 ```
-### Initialization with Config
+See example of authlogic usage:
+* [phpbbauth.php](example2/phpbbauth.php)
+
+### Bot
+
+Bot is instance of `Browser` with `runTask` functions and logic.
+
 ```php
-use aphp\logger\FileLogger;
-use aphp\Parser\Bot;
-use aphp\Parser\Config;
+class Bot extends Browser
+{
+	public $botSettings = null; // BotSettings
+	public $tasks = [];
 
-set_time_limit(0); //  Limits the maximum execution time, unlimited
+	// ---------
 
-$logger = FileLogger::getInstance();
-$logger->configure(__DIR__ . '/logs/log');
-$logger->startLog();
+	public function __construct(BotSettings $botSettings);
+	public function nextConfig();
 
-$config = new Config();
+	// --------
 
-$bot = new Bot( __DIR__ . '/temp');
-$bot->setLogger( $logger );
+	public function runTaskNoChangeProxy(/*Closure*/ $task, $type = 'task-noChangeProxy', $name = '');
+	public function runTaskAuth(/*Closure*/ $task, $type = 'task-a', $name = '');
+	public function runTask(/*Closure*/ $task, $type = 'task', $name = '');
 
-$config->proxyURLs_text = 
-'78.40.87.18:801
-78.40.87.18:802
-78.40.87.18:803
-78.40.87.18:804';
-
-// adding proxies with Config
-$bot->setConfig($config); 
-echo 'browsers count = ' . count($bot->browsers) . PHP_EOL;
-```
-### Proxy Test
-Used to make working proxy list.
-```php
-$userAgentList = new UserAgentList('textFiles/useragents.txt');
-
-$bot->add_proxy_http('78.40.87.18:801', $userAgentList->getAgent());
-$bot->add_proxy_http('78.40.87.18:802', $userAgentList->getAgent());
-$bot->add_proxy_http('78.40.87.18:803', $userAgentList->getAgent());
-$bot->add_proxy_http('78.40.87.18:804', $userAgentList->getAgent());
-
-$bot->runProxyTest( 'https://httpstat.us/' );
-```
-### Download
-Used browser to get result
-```php
-$result = $bot->navigate( 'https://httpstat.us/' );
-if ($result) {
-	echo $bot->currentBrowser->getData();
-}
-$result = $bot->downloadFile( 'https://httpstat.us/' ); 
-if ($result) {
-	copy( $bot->currentBrowser->getTempFileName(), __DIR__ . '/dw/file.html' );
+	public function lastTask();
 }
 ```
-### Download page with css resources
+
+Example tasks:
+
 ```php
-if ($bot->downloadCSSResources('https://httpstat.us/', __DIR__ . '/dw')) {
-	print_r(scandir(__DIR__ . '/dw'));
-	print_r(scandir(__DIR__ . '/dw/res'));
-}
-/*
-(
-    [2] => httpshttpstat.us.html
-    [3] => res
-)
-(
-    [2] => 0332350d3d76241fdc35dd0a58d4470f.css
-)
-*/
+// try count = 3 (default), proxy not changed
+$r = $bot->runTaskNoChangeProxy(function() use($bot){
+    return $bot->navigate('https://httpstat.us');
+});
+// try count = setting->retryPerProxy * setting->retryCount = 3*10 = 30
+// proxy is changed on fail
+$r = $bot->runTask(function() use($bot){
+    return $bot->navigate('https://httpstat.us');
+});
+// try count = setting->retryPerProxy * setting->retryCount = 3*10 = 30
+// proxy is changed on fail,
+// if authLogic->isAuth() == false, then authLogic->doAuth()
+$r = $bot->runTaskAuth(function() use($bot){
+    return $bot->navigate('https://httpstat.us');
+});
 ```
-### Manual proxy switcher
-```php
-$bot->nextProxy();
-```
-## App example
-See 
-* [exampleApp.php](example/exampleApp.php)
-* [example03.php](example/example03.php)
+See the browser documentation: [aphp/http-client](https://github.com/GonistLelatel/aphp_httpclient)
 
 ## Test running
 
 * install __phpunit, composer, php__ if not installed
-* run __composer install__ at package dir
-* run __tests/startServer.bat__
-* run __tests/css-webserver/startServer.bat__
-* run __tests/startTest.bat__
+* __composer install__ at package dir
+* __composer run-script test__
 
-On linux use *.sh files like *.bat files
+<details><summary><b>&#x1F535; Useful links</b></summary>
+<p>
 
-## Useful links: 
+* Composer package generator
+	* [projectGen2](https://github.com/GonistLelatel/projectGen2)
 * Cmd windows
 	* [WindowsPathEditor](https://rix0rrr.github.io/WindowsPathEditor/)
 	* [conemu](https://conemu.github.io/)
-* PHP in CMD
+* PHP downloads
 	* [windows.php.net](https://windows.php.net/)
 	* [xampp](https://www.apachefriends.org/ru/index.html)
+	* [openserver](https://open-server.soft112.com/)
+* PHP installations
+	* [install-php-on-windows](https://www.utilizewindows.com/install-php-on-windows/)
 	* [phpunit 5](https://phpunit.de/getting-started/phpunit-5.html)
 	* [phpunit in bat](https://stackoverflow.com/questions/24861233/phpunit-setup-in-batch-file)
 	* [composer in bat](http://leedavis81.github.io/global-installation-of-composer-on-windows/)
@@ -237,9 +209,11 @@ On linux use *.sh files like *.bat files
 	* [git](https://gitforwindows.org/)
 	* [smartgit](https://www.syntevo.com/smartgit/)
 
+</p>
+</details>
+
 ## More features
 For more features:
-* Read source of [HttpClient](src/HttpClient.php) class
 * Read [CURL](https://www.php.net/curl) documentation
 * Read source code and examples
 * Practice with `Parser` in real code

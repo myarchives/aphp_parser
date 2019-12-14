@@ -3,6 +3,20 @@
 ## Future
 * Documentation, test and code cleanup.
 
+## 2.0.0
+
+* Removed 1.0.0 features
+	* tests
+	* examples
+	* cssparser
+	* path utility class
+* Added
+	* Bot 2
+	* Auth logic
+	* HttpClient ~1.1.0
+* In future
+	* Package will not implement logic for parsing url or css, because this features need the standalone packages.
+
 ## 1.0.9
 
 * Added aphp/http-client package

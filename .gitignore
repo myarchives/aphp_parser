@@ -5,3 +5,8 @@ example/dw
 example/temp
 tests/temp
 tests/dw
+tests/logs
+example2/logs
+example2/temp
+example2/app/proxyList.txt
+example2/phpbbforum_indexpage.html

@@ -1,27 +1,30 @@
 {
 	"name": "aphp/parser",
 	"description": "PHP Curl Parser for static websites, easy to send HTTP requests, use proxy",
-	"keywords": [ 
+	"keywords": [
 		"PHP", "curl", "curlphp", "http", "http-client", "http-requests", "browser", "web-scraper", "web-scraping", "proxy"
 	],
 	"type": "php",
 	"license": "MIT",
 	"minimum-stability": "dev",
 	"require": {
-		"psr/log": "~1.0",
 		"aphp/files": "~1.0.0",
-		"aphp/http-client": "~1.0.0"
+		"aphp/http-client": "~1.1.0",
+		"aphp/foundation": "~2.0.0"
 	},
 	"require-dev": {
-		"aphp/router": "~1.0",
-		"aphp/logger": "~1.0"
+		"aphp/logger": "~2.0.0",
+		"aphp/cli": "~1.0.0",
+		"aphp/dom": "~1.0.0"
 	},
 	"autoload": {
 		"psr-4": {
 			"aphp\\Parser\\" : "src/"
-		},
-		"files": [
-			"src/Exceptions.php"
+		}
+	},
+	"scripts": {
+		"test" : [
+			"phpunit --bootstrap tests/bootstrap_autoload.php tests"
 		]
 	}
 }

@@ -1,102 +1,172 @@
-<?php 
+<?php
 
-class BotTest extends Base_TestCase {
+class BotTest extends Base_TestCase
+{
+	public function testPositiveCase()
+	{
+		$app = MockApp::getInstance();
+		$app->logger->info('-- STARTED testPositiveCase');
 
-	// STATIC
-	public static function setUpBeforeClass() {
-	
+		$bot = $app->bot;
+
+		$app->clientSet('ok', 200);
+
+		$this->assertEquals('#1', $bot->config->_proxy );
+
+		$r = $bot->runTask(function() use($bot) {
+			return $bot->navigate('http://url');
+		});
+		$d = $bot->getData();
+
+		$this->assertEquals('ok', $d);
+
+		$bot->nextConfig();
+		$this->assertEquals('#2', $bot->config->_proxy );
+
+		$bot->nextConfig();
+		$this->assertEquals('#3', $bot->config->_proxy );
+
+		$app->logger->info('-- FINISHED testPositiveCase');
 	}
 
-	public static function tearDownAfterClass() {
-		
-	}
-	
-	// override
-	
-	protected $userAgent = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36';
-	protected $bot;
-	
-	protected function setUp() {
-		$this->bot = new mockBot( __DIR__ . '/temp' );
-		$this->bot->add_proxy_http('78.40.87.18:801', $this->userAgent);
-		$this->bot->add_proxy_http('78.40.87.18:802', $this->userAgent);
-		$this->bot->add_proxy_http('78.40.87.18:803', $this->userAgent);
-		$this->bot->add_proxy_http('78.40.87.18:804', $this->userAgent);
-	}
-	
-	protected function tearDown() {
+	public function testProxyNextCase()
+	{
+		$app = MockApp::getInstance();
+		$app->logger->info('-- STARTED testProxyNextCase');
 
-	}
+		$app->resetAuthLogic();
+		$bot = $app->bot;
 
-	// TEST
+		$app->clientSet(null, 200);
 
-	public function test_proxyTest() {
-		$this->bot->currentSettings->sleepTimeout = 0;
-		$this->bot->runProxyTest('https://google.com');
-		$count = count($this->bot->browsers);
+		$bot->botSettings->authLogic->failEvent = function() use($app) {
+			$app->clientSet('ok', 200);
+			return false;
+		};
 
-		$this->assertTrue( $count == 4 );
-		$this->bot->browsers[1]->_nextResult = false;
+		$this->assertEquals('#1', $bot->config->_proxy );
 
-		$this->bot->runProxyTest('https://google.com');
-		$count = count($this->bot->browsers);
-		$this->assertTrue( $count == 3 );
-	}
-	
-	public function test_navigate1() {
-		$this->bot->currentSettings->sleepTimeout = 0;
-		$this->bot->currentSettings->retryCount = 4;
+		$r = $bot->runTask(function() use($bot) {
+			return $bot->navigate('http://url');
+		});
+		$d = $bot->getData();
 
-		$this->bot->browsers[0]->_nextResult = false;
-		$this->bot->browsers[1]->_nextResult = false;
-		$this->bot->browsers[2]->_nextResult = false;
-		$this->bot->browsers[3]->_nextResult = true;
+		$this->assertEquals('#2', $bot->config->_proxy );
+		$this->assertEquals('ok', $d);
 
-		$result = $this->bot->navigate( '' );
-
-		$this->assertTrue( $this->bot->currentBrowser->prefix == 'browser3_' );
-		$this->assertTrue( $result );
-
-		$this->bot->browsers[0]->_nextResult = false;
-		$this->bot->browsers[1]->_nextResult = true;
-		$this->bot->browsers[2]->_nextResult = true;
-		$this->bot->browsers[3]->_nextResult = true;
-		$this->bot->currentBrowser = $this->bot->browsers[0];
-
-		$result = $this->bot->navigate( '' );
-
-		$this->assertTrue( $this->bot->currentBrowser->prefix == 'browser1_' );
-		$this->assertTrue( $result );
+		$app->logger->info('-- FINISHED testProxyNextCase');
 	}
 
-	public function test_error() {
-		$this->bot->currentSettings->sleepTimeout = 0;
-		$this->bot->currentSettings->retryCount = 4;
+	public function testProxyFailCase()
+	{
+		$app = MockApp::getInstance();
+		$app->logger->info('-- STARTED testProxyFailCase');
 
-		$this->bot->browsers[0]->_nextResult = false;
-		$this->bot->browsers[1]->_nextResult = false;
-		$this->bot->browsers[2]->_nextResult = false;
-		$this->bot->browsers[3]->_nextResult = false;
+		$app->resetAuthLogic();
+		$bot = $app->bot;
 
-		$result = $this->bot->navigate( '' );
+		$app->clientSet(null, 200);
 
-		$this->assertTrue( $this->bot->currentBrowser->prefix == 'browser0_' );
-		$this->assertTrue( $result == false );
+		$countTry = 0;
+
+		$bot->botSettings->authLogic->failEvent = function() use(&$countTry) {
+			$countTry++;
+			return false;
+		};
+
+		$this->assertEquals('#1', $bot->config->_proxy );
+
+		$r = $bot->runTask(function() use($bot) {
+			return $bot->navigate('http://url');
+		});
+		$d = $bot->getData();
+
+		# 11 proxy
+		$this->assertEquals('#11', $bot->config->_proxy );
+		$this->assertEquals(10, $countTry );
+		$this->assertEquals(null, $d);
+
+		$app->logger->info('-- FINISHED testProxyFailCase');
 	}
 
-	/**
-    * @expectedException aphp\Parser\NoProxy_Exception
-    */
-	public function test_proxyTest_error() {
-		$this->bot->currentSettings->sleepTimeout = 0;
-		$this->bot->browsers[0]->_nextResult = false;
-		$this->bot->browsers[1]->_nextResult = false;
-		$this->bot->browsers[2]->_nextResult = false;
-		$this->bot->browsers[3]->_nextResult = false;
+	public function testPositiveAuth()
+	{
+		$app = MockApp::getInstance();
+		$app->logger->info('-- STARTED testPositiveAuth');
+		$app->resetAuthLogic();
+		$bot = $app->bot;
+		$authLogic = $bot->botSettings->authLogic;
 
-		$this->bot->runProxyTest('https://google.com');
+		$countCalledAuth = 0;
+		$authLogic->doAuth = function() use($app, $bot, $authLogic, &$countCalledAuth) {
+			$app->clientSet('auth ok', 200);
+			$r = $bot->runTask(function() use($bot) {
+				return $bot->navigate('http://url');
+			}, 'doAuth');
+			$d = $bot->getData();
+			$authLogic->_isAuth = ($d == 'auth ok');
+			$countCalledAuth++;
+			return $authLogic->_isAuth;
+		};
 
-		$result = $this->bot->navigate( '' );
-		$this->assertTrue( $result == false );
+		// ---
+
+		$app->clientSet('no auth', 200);
+
+		$r = $bot->runTask(function() use($bot) {
+			return $bot->navigate('http://url');
+		});
+		$d = $bot->getData();
+		$this->assertEquals('no auth', $d);
+
+		// --
+		$r = $bot->runTaskAuth(function() use($bot) {
+			return $bot->navigate('http://url');
+		});
+		$d = $bot->getData();
+		$this->assertEquals('auth ok', $d);
+		$this->assertEquals('1', $countCalledAuth);
+
+		$app->logger->info('-- FINISHED testPositiveAuth');
+	}
+
+	public function testPositiveAuthReconnect()
+	{
+		$app = MockApp::getInstance();
+		$app->logger->info('-- STARTED testPositiveAuthReconnect');
+		$app->resetAuthLogic();
+		$bot = $app->bot;
+		$authLogic = $bot->botSettings->authLogic;
+
+		// --
+		$app->clientSet(null, 500);
+
+		$authLogic->failEvent = function() use($bot, $app) {
+			$lastTask = $bot->lastTask();
+			if ($lastTask[1] == 'authLogic->doAuth') {
+				$app->clientSet('auth ok', 200);
+			}
+			return false;
+		};
+
+		$authLogic->doAuth = function() use($app, $bot, $authLogic) {
+			$r = $bot->runTask(function() use($bot) {
+				return $bot->navigate('http://url');
+			}, '', 'authLogic->doAuth');
+			$d = $bot->getData();
+			$authLogic->_isAuth = ($d == 'auth ok');
+			$app->clientSet('OKKKK', 200);
+			return $authLogic->_isAuth;
+		};
+
+		// --
+
+		$r = $bot->runTaskAuth(function() use($bot) {
+			return $bot->navigate('http://url');
+		});
+		$d = $bot->getData();
+
+		$this->assertEquals('OKKKK', $d);
+		$app->logger->info('-- FINISHED testPositiveAuthReconnect');
 	}
 }

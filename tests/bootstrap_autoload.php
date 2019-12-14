@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 /*
 https://phpunit.de/getting-started/phpunit-5.html
@@ -16,7 +16,8 @@ phpunit --bootstrap tests/bootstrap_autoload.php --filter %method% tests/%file%T
 */
 
 require __DIR__ . '/../vendor/autoload.php';
-require __DIR__ . '/mock/mockBot.php';
+require __DIR__ . '/mock/MockClient.php';
+require __DIR__ . '/mock/MockApp.php';
 
 class Base_TestCase extends PHPUnit_Framework_TestCase {
 
